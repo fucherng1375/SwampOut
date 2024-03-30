@@ -11,9 +11,22 @@
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "InputActionValue.h"
+#include "Net/UnrealNetwork.h"
+#include "AbilitySystem/Attribute/AttributeSetHeallth.h"
 
 ASOCharacterBase::ASOCharacterBase()
 {
+#pragma region Ability System Component
+	AbilitySystemComponent = CreateDefaultSubobject<USOAbilitySystemComponent>("AbilitySystemComp");
+	AbilitySystemComponent->SetIsReplicated(true);
+	AbilitySystemComponent->SetReplicationMode(EGameplayEffectReplicationMode::Mixed);
+
+	AbilitySystemComponent->OnActiveGameplayEffectAddedDelegateToSelf.AddUObject(this, &ASOCharacterBase::OnActiveGameplayEffectApplied);
+	AbilitySystemComponent->OnAnyGameplayEffectRemovedDelegate().AddUObject(this, &ASOCharacterBase::OnActiveGameplayEffectRemoved);
+	AbilitySystemComponent->AbilityFailedCallbacks.AddUObject(this, &ASOCharacterBase::OnActiveGameplayAbilityFailed);
+#pragma endregion
+
+
 	// Set size for collision capsule
 	GetCapsuleComponent()->InitCapsuleSize(42.f, 96.0f);
 
@@ -50,17 +63,58 @@ ASOCharacterBase::ASOCharacterBase()
 	// are set in the derived blueprint asset named ThirdPersonCharacter (to avoid direct content references in C++)
 }
 
+void ASOCharacterBase::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+}
+
+void ASOCharacterBase::InitializeAttributet()
+{
+	UAttributeSetHeallth* HealthSet = NewObject<UAttributeSetHeallth>(this);
+	AbilitySystemComponent->AddAttributeSetSubobject(HealthSet);
+}
+
 void ASOCharacterBase::BeginPlay()
 {
 	// Call the base class  
 	Super::BeginPlay();
+	InitializeAttributet();
 }
 
-//////////////////////////////////////////////////////////////////////////
-// Input
+void ASOCharacterBase::PossessedBy(AController* NewController)
+{
+	Super::PossessedBy(NewController);
+
+	AbilitySystemComponent->InitAbilityActorInfo(this, this);
+}
+
+void ASOCharacterBase::OnRep_Controller()
+{
+	Super::OnRep_Controller();
+
+	AbilitySystemComponent->InitAbilityActorInfo(this, this);
+}
+
+void ASOCharacterBase::OnRep_PlayerState()
+{
+	Super::OnRep_PlayerState();
+}
+
+void ASOCharacterBase::PreInitializeComponents()
+{
+}
 
 void ASOCharacterBase::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
+	check(PlayerInputComponent);
+
+	if (AbilitySystemComponent && InputComponent)
+	{
+		//const FGameplayAbilityInputBinds Binds("Confirm", "Cancel", "EPXAbilityInputID", static_cast<int32>(EPXAbilityInputID::Confirm), static_cast<int32>(EPXAbilityInputID::Cancel));
+		//AbilitySystemComponent->BindAbilityActivationToInputComponent(InputComponent, Binds);
+	}
+
 	// Add Input Mapping Context
 	if (APlayerController* PlayerController = Cast<APlayerController>(GetController()))
 	{
