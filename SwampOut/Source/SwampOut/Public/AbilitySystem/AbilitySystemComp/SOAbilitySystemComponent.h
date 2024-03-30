@@ -19,4 +19,5 @@ class SWAMPOUT_API USOAbilitySystemComponent : public UAbilitySystemComponent
 public:
 	virtual void OnGameplayTaskActivated(UGameplayTask& Task) override;
 	virtual void OnGameplayTaskDeactivated(UGameplayTask& Task) override;
+	virtual void BindAbilityActivationToInputComponent(UInputComponent* InputComponent, FGameplayAbilityInputBinds BindInfo);
 };
