@@ -12,6 +12,7 @@
 #include "EnhancedInputSubsystems.h"
 #include "InputActionValue.h"
 #include "Net/UnrealNetwork.h"
+#include "AbilitySystem/GASStructAndEnum/InputID.h"
 #include "AbilitySystem/Attribute/AttributeSetHeallth.h"
 
 ASOCharacterBase::ASOCharacterBase()
@@ -111,8 +112,9 @@ void ASOCharacterBase::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 
 	if (AbilitySystemComponent && InputComponent)
 	{
-		//const FGameplayAbilityInputBinds Binds("Confirm", "Cancel", "EPXAbilityInputID", static_cast<int32>(EPXAbilityInputID::Confirm), static_cast<int32>(EPXAbilityInputID::Cancel));
-		//AbilitySystemComponent->BindAbilityActivationToInputComponent(InputComponent, Binds);
+		const FTopLevelAssetPath AssestPath (TEXT("/Script/SwampOut"), TEXT("ESOAbilityInputID"));
+		const FGameplayAbilityInputBinds Binds("Confirm", "Cancel", AssestPath, static_cast<int32>(ESOAbilityInputID::Confirm), static_cast<int32>(ESOAbilityInputID::Cancel));
+		AbilitySystemComponent->BindAbilityActivationToInputComponent(InputComponent, Binds);
 	}
 
 	// Add Input Mapping Context
