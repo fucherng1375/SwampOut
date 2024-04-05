@@ -16,13 +16,6 @@ void UAttributeSetHeallth::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>&
 	DOREPLIFETIME_CONDITION_NOTIFY(UAttributeSetHeallth, HealthMax, COND_None, REPNOTIFY_Always);
 }
 
-void UAttributeSetHeallth::PreAttributeBaseChange(const FGameplayAttribute& Attribute, float& NewValue) const
-{
-	Super::PreAttributeBaseChange(Attribute, NewValue);
-
-	ClampAttribute(Attribute, NewValue);
-}
-
 void UAttributeSetHeallth::PreAttributeChange(const FGameplayAttribute& Attribute, float& NewValue)
 {
 	Super::PreAttributeChange(Attribute, NewValue);
@@ -30,11 +23,6 @@ void UAttributeSetHeallth::PreAttributeChange(const FGameplayAttribute& Attribut
 	ClampAttribute(Attribute, NewValue);
 
 	if (Attribute == GetHealthMaxAttribute() && GetHealthBase() > NewValue) SetHealthBase(NewValue);
-}
-
-void UAttributeSetHeallth::PostGameplayEffectExecute(const FGameplayEffectModCallbackData& Data)
-{
-	Super::PostGameplayEffectExecute(Data);
 }
 
 void UAttributeSetHeallth::ClampAttribute(const FGameplayAttribute& Attribute, float& NewValue) const

@@ -7,6 +7,11 @@ USOAbilitySystemComponent::USOAbilitySystemComponent()
 {
 }
 
+void USOAbilitySystemComponent::BeginPlay()
+{
+
+}
+
 void USOAbilitySystemComponent::OnGameplayTaskActivated(UGameplayTask& Task)
 {
 }

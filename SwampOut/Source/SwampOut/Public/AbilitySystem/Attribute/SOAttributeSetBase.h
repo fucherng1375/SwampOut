@@ -17,4 +17,14 @@ class SWAMPOUT_API USOAttributeSetBase : public UAttributeSet
 {
 	GENERATED_BODY()
 	
+public:
+    USOAttributeSetBase();
+	virtual void GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLifetimeProps) const override;
+
+protected:
+	virtual void PreAttributeBaseChange(const FGameplayAttribute& Attribute, float& NewValue) const override;
+	virtual void PreAttributeChange(const FGameplayAttribute& Attribute, float& NewValue) override;
+	virtual void PostGameplayEffectExecute(const FGameplayEffectModCallbackData& Data) override;
+
+	virtual void ClampAttribute(const FGameplayAttribute& Attribute, float& NewValue) const;
 };
