@@ -6,15 +6,17 @@
 #include "AbilitySystemComponent.h"
 #include "SOAbilitySystemComponent.generated.h"
 
-/**
- * 
- */
+class UPDA_AttributeInitialization;
+
 UCLASS()
 class SWAMPOUT_API USOAbilitySystemComponent : public UAbilitySystemComponent
 {
 	GENERATED_BODY()
 	
 	USOAbilitySystemComponent();
+public:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPDA_AttributeInitialization* DefaultAttribute;
 
 public:
 	virtual void BeginPlay() override;

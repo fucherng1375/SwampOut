@@ -25,7 +25,7 @@ public:
 #pragma region Ability System
 public:
 
-	UPROPERTY(BlueprintReadOnly, Category = ActorComponent)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = ActorComponent)
 	USOAbilitySystemComponent* AbilitySystemComponent;
 
 protected:
@@ -39,8 +39,6 @@ protected:
 	UFUNCTION(BlueprintImplementableEvent)
 	void OnActiveGameplayEffectRemoved(const FActiveGameplayEffect& EffectRemoved);
 
-private:
-	void InitializeAttributet();
 #pragma endregion
 
 #pragma region Camera

@@ -70,17 +70,10 @@ void ASOCharacterBase::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Out
 
 }
 
-void ASOCharacterBase::InitializeAttributet()
-{
-	UAttributeSetHeallth* HealthSet = NewObject<UAttributeSetHeallth>(this);
-	AbilitySystemComponent->AddAttributeSetSubobject(HealthSet);
-}
-
 void ASOCharacterBase::BeginPlay()
 {
 	// Call the base class  
 	Super::BeginPlay();
-	InitializeAttributet();
 }
 
 void ASOCharacterBase::PossessedBy(AController* NewController)
