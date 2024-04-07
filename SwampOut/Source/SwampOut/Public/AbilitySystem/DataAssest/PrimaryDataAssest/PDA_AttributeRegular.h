@@ -5,27 +5,24 @@
 #include "CoreMinimal.h"
 #include "Engine/DataAsset.h"
 #include "AbilitySystem/GameplayEffect/SOGameplayEffectBase.h"
-#include "PDA_AttributeInitialization.generated.h"
+#include "PDA_AttributeRegular.generated.h"
+
 
 USTRUCT(BlueprintType)
-struct FDefaultMaxValue
+struct FDefaultPrePostAdditiveData
 {
     GENERATED_BODY()
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
-    float DefaultValue;
-
-    UPROPERTY(EditAnywhere, BlueprintReadWrite)
-    float MaxValue;
-
+    TSubclassOf<USOGameplayEffectBase> GameplayEffect;
 };
 
 UCLASS()
-class SWAMPOUT_API UPDA_AttributeInitialization : public UPrimaryDataAsset
+class SWAMPOUT_API UPDA_AttributeRegular : public UPrimaryDataAsset
 {
 	GENERATED_BODY()
 
 public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
-    TMap<TSubclassOf<USOGameplayEffectBase>, FDefaultMaxValue> AttributeData;
+    TArray<FDefaultPrePostAdditiveData> AttributeData;
 };

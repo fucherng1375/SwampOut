@@ -13,7 +13,6 @@
 #include "InputActionValue.h"
 #include "Net/UnrealNetwork.h"
 #include "AbilitySystem/GASStructAndEnum/InputID.h"
-#include "AbilitySystem/Attribute/AttributeSetHeallth.h"
 
 ASOCharacterBase::ASOCharacterBase()
 {

@@ -21,7 +21,7 @@ public:
 public:
 	ATTRIBUTE_ACCESSORS(UAttributeSetHeallth, HealthBase);
 	UPROPERTY(BlueprintReadOnly, Category = "Attributes", ReplicatedUsing = OnRep_HealthBase)
-	FGameplayAttributeData HealthBase = 100;
+	FGameplayAttributeData HealthBase;
 
 	UFUNCTION()
 	virtual void OnRep_HealthBase(const FGameplayAttributeData& OldHealthBase) { GAMEPLAYATTRIBUTE_REPNOTIFY(UAttributeSetHeallth, HealthBase, OldHealthBase); }
@@ -31,10 +31,20 @@ public:
 public:
 	ATTRIBUTE_ACCESSORS(UAttributeSetHeallth, HealthMax);
 	UPROPERTY(BlueprintReadOnly, Category = "Attributes", ReplicatedUsing = OnRep_HealthMax)
-	FGameplayAttributeData HealthMax = 100;
+	FGameplayAttributeData HealthMax;
 
 	UFUNCTION()
 	virtual void OnRep_HealthMax(const FGameplayAttributeData& OldHealthMax) { GAMEPLAYATTRIBUTE_REPNOTIFY(UAttributeSetHeallth, HealthMax, OldHealthMax); }
+#pragma endregion
+
+#pragma region Health Regen
+public:
+	ATTRIBUTE_ACCESSORS(UAttributeSetHeallth, HealthRegen);
+	UPROPERTY(BlueprintReadOnly, Category = "Attributes", ReplicatedUsing = OnRep_HealthRegen)
+	FGameplayAttributeData HealthRegen;
+
+	UFUNCTION()
+	virtual void OnRep_HealthRegen(const FGameplayAttributeData& OldHealthRegen) { GAMEPLAYATTRIBUTE_REPNOTIFY(UAttributeSetHeallth, HealthRegen, OldHealthRegen); }
 #pragma endregion
 
 protected:

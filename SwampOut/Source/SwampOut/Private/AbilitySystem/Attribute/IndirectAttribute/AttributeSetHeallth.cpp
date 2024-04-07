@@ -1,7 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "AbilitySystem/Attribute/AttributeSetHeallth.h"
+#include "AbilitySystem/Attribute/IndirectAttribute/AttributeSetHeallth.h"
 #include "Net/UnrealNetwork.h"
 
 UAttributeSetHeallth::UAttributeSetHeallth()
@@ -14,6 +14,7 @@ void UAttributeSetHeallth::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>&
 
 	DOREPLIFETIME_CONDITION_NOTIFY(UAttributeSetHeallth, HealthBase, COND_None, REPNOTIFY_Always);
 	DOREPLIFETIME_CONDITION_NOTIFY(UAttributeSetHeallth, HealthMax, COND_None, REPNOTIFY_Always);
+	DOREPLIFETIME_CONDITION_NOTIFY(UAttributeSetHeallth, HealthRegen, COND_None, REPNOTIFY_Always);
 }
 
 void UAttributeSetHeallth::PreAttributeChange(const FGameplayAttribute& Attribute, float& NewValue)
