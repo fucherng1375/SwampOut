@@ -9,18 +9,6 @@
 #include "SOAbilitySystemComponent.generated.h"
 
 
-USTRUCT(BlueprintType)
-struct FDefaultAttributeData
-{
-	GENERATED_BODY()
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	UPDA_AttributeDefaultMaxValue* DefaultAttribute;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	UPDA_AttributeRegular* RegularAttribute;
-};
-
 UCLASS()
 class SWAMPOUT_API USOAbilitySystemComponent : public UAbilitySystemComponent
 {
@@ -30,7 +18,7 @@ class SWAMPOUT_API USOAbilitySystemComponent : public UAbilitySystemComponent
 public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	FDefaultAttributeData DefaultAttributeData;
+	UPrimaryDataAsset* DefaultAttributeData;
 
 public:
 	virtual void BeginPlay() override;
@@ -40,5 +28,5 @@ public:
 
 private:
 	void InitializeAttributeWithDefaultMaxData(FDefaultMaxData& DefaultData, FName MaxValueTag, FName DefaultValueTag);
-	void InitializeAttributeWithRegularData(FDefaultPrePostAdditiveData& DefaultData);
+	void InitializeAttributeWithRegularData(FName SetByCaller, FRegularAttributeData& DefaultData);
 };

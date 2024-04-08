@@ -5,6 +5,7 @@
 
 #include "AbilitySystem/Attribute/IndirectAttribute/AttributeSetHeallth.h"
 #include "AbilitySystem/Attribute/IndirectAttribute/AttributeSetStamina.h"
+#include "AbilitySystem/Attribute/IndirectAttribute/AttributeSetStatusResistantBase.h"
 
 #include "AbilitySystem/Attribute/RegularAttribute/AttributeSetStrength.h"
 
@@ -14,9 +15,11 @@ USOAbilitySystemComponent::USOAbilitySystemComponent()
 
 void USOAbilitySystemComponent::BeginPlay()
 {
-	if (DefaultAttributeData.DefaultAttribute)
+	UPDA_AttributeDefaultMaxValue* AttributeDefaultMaxValue = Cast<UPDA_AttributeDefaultMaxValue>(DefaultAttributeData);
+
+	if (AttributeDefaultMaxValue)
 	{
-		for (auto& AttributeData : DefaultAttributeData.DefaultAttribute->AttributeData)
+		for (auto& AttributeData : AttributeDefaultMaxValue->AttributeData)
 		{
 			USOGameplayEffectBase* cdo = Cast<USOGameplayEffectBase>(AttributeData.GameplayEffect.GetDefaultObject());
 
@@ -52,24 +55,43 @@ void USOAbilitySystemComponent::BeginPlay()
 		}
 	}
 
-	if (DefaultAttributeData.RegularAttribute)
+	UPDA_AttributeRegular* RegularAttribute = Cast<UPDA_AttributeRegular>(DefaultAttributeData);
+	if (RegularAttribute)
 	{
-		for (auto& AttributeData : DefaultAttributeData.RegularAttribute->AttributeData)
+		for (auto& AttributeData : RegularAttribute->AttributeData)
 		{
 			USOGameplayEffectBase* cdo = Cast<USOGameplayEffectBase>(AttributeData.GameplayEffect.GetDefaultObject());
-#pragma region RegularAttribute Health Iitialization
-			if (cdo->GetAssetTags().HasAny(FGameplayTagContainer(FGameplayTag::RequestGameplayTag("GameplayTag.Effect.Initialization.Health"))))
+			if (IsValid(AttributeData.GameplayEffect))
 			{
-				if (!HasAttributeSetForAttribute(UAttributeSetHeallth::GetHealthBaseAttribute()))
+#pragma region RegularAttribute Strength Iitialization
+				if (cdo->GetAssetTags().HasAny(FGameplayTagContainer(FGameplayTag::RequestGameplayTag("GameplayTag.Effect.Initialization.Strength"))))
 				{
-					UAttributeSetHeallth* HealthSet = NewObject<UAttributeSetHeallth>(this);
-					AddAttributeSetSubobject(HealthSet);
-
+					if (!HasAttributeSetForAttribute(UAttributeSetStrength::GetStrengthBaseAttribute()))
+					{
+						UAttributeSetStrength* StrengthSet = NewObject<UAttributeSetStrength>(this);
+						AddAttributeSetSubobject(StrengthSet);
+					}
+					if (!HasAttributeSetForAttribute(UAttributeSetHeallth::GetHealthBaseAttribute()))
+					{
+						UAttributeSetHeallth* HealthSet = NewObject<UAttributeSetHeallth>(this);
+						AddAttributeSetSubobject(HealthSet);
+					}
+					if (!HasAttributeSetForAttribute(UAttributeSetStatusResistantBase::GetStatusResistantBaseAttribute()))
+					{
+						UAttributeSetStatusResistantBase* StatusResistantSet = NewObject<UAttributeSetStatusResistantBase>(this);
+						AddAttributeSetSubobject(StatusResistantSet);
+					}
+					/*if (!HasAttributeSetForAttribute(UAttributeSetHeallth::GetHealthBaseAttribute()))
+					{
+						UAttributeSetHeallth* HealthSet = NewObject<UAttributeSetHeallth>(this);
+						AddAttributeSetSubobject(HealthSet);
+					}*/
+					InitializeAttributeWithRegularData("GameplayTag.Effect.Modifier.StrengthBase", AttributeData);
+					GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("Initialized StrengthBase"));
 				}
-			}
 #pragma endregion
+			}
 
-			InitializeAttributeWithRegularData(AttributeData);
 		}
 	}
 }
@@ -82,9 +104,10 @@ void USOAbilitySystemComponent::InitializeAttributeWithDefaultMaxData(FDefaultMa
 	ApplyGameplayEffectSpecToSelf(*SpecHandle.Data);
 }
 
-void USOAbilitySystemComponent::InitializeAttributeWithRegularData(FDefaultPrePostAdditiveData& DefaultData)
+void USOAbilitySystemComponent::InitializeAttributeWithRegularData(FName SetByCaller , FRegularAttributeData& DefaultData)
 {
 	FGameplayEffectSpecHandle SpecHandle = MakeOutgoingSpec(DefaultData.GameplayEffect, 1.0f, MakeEffectContext());
+	SpecHandle.Data->SetSetByCallerMagnitude(FGameplayTag::RequestGameplayTag(SetByCaller), DefaultData.DefaultValue);
 	ApplyGameplayEffectSpecToSelf(*SpecHandle.Data);
 }
 

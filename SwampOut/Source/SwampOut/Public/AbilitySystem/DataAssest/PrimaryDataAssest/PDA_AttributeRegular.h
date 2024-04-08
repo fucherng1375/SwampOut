@@ -9,12 +9,16 @@
 
 
 USTRUCT(BlueprintType)
-struct FDefaultPrePostAdditiveData
+struct FRegularAttributeData
 {
     GENERATED_BODY()
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
     TSubclassOf<USOGameplayEffectBase> GameplayEffect;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    float DefaultValue;
+
 };
 
 UCLASS()
@@ -24,5 +28,5 @@ class SWAMPOUT_API UPDA_AttributeRegular : public UPrimaryDataAsset
 
 public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
-    TArray<FDefaultPrePostAdditiveData> AttributeData;
+    TArray<FRegularAttributeData> AttributeData;
 };
