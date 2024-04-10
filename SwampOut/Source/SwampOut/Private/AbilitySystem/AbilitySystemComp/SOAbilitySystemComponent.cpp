@@ -3,111 +3,77 @@
 
 #include "AbilitySystem/AbilitySystemComp/SOAbilitySystemComponent.h"
 
-#include "AbilitySystem/Attribute/IndirectAttribute/AttributeSetHeallth.h"
-#include "AbilitySystem/Attribute/IndirectAttribute/AttributeSetStamina.h"
-#include "AbilitySystem/Attribute/IndirectAttribute/AttributeSetStatusResistantBase.h"
-
-#include "AbilitySystem/Attribute/RegularAttribute/AttributeSetStrength.h"
-
 USOAbilitySystemComponent::USOAbilitySystemComponent()
 {
 }
 
 void USOAbilitySystemComponent::BeginPlay()
 {
-	UPDA_AttributeDefaultMaxValue* AttributeDefaultMaxValue = Cast<UPDA_AttributeDefaultMaxValue>(DefaultAttributeData);
 
-	if (AttributeDefaultMaxValue)
+	for (auto& AS : DefaultAttributeSetting)
 	{
-		for (auto& AttributeData : AttributeDefaultMaxValue->AttributeData)
+		if (IsValid(AS->GameplayEffect))
 		{
-			USOGameplayEffectBase* cdo = Cast<USOGameplayEffectBase>(AttributeData.GameplayEffect.GetDefaultObject());
-
-#pragma region DefaultAttribute Health Iitialization
-			if (cdo->GetAssetTags().HasAny(FGameplayTagContainer(FGameplayTag::RequestGameplayTag("GameplayTag.Effect.Initialization.Health"))))
+#pragma region Default and Max Value
+			UAttributeSettingDefaultMax* DefaultMaxSetting = Cast<UAttributeSettingDefaultMax>(AS);
+			if (DefaultMaxSetting)
 			{
-				if (!HasAttributeSetForAttribute(UAttributeSetHeallth::GetHealthBaseAttribute()))
-				{
-					UAttributeSetHeallth* HealthSet = NewObject<UAttributeSetHeallth>(this);
-					AddAttributeSetSubobject(HealthSet);
-				}
-				InitializeAttributeWithDefaultMaxData(AttributeData, "GameplayTag.Effect.Modifier.HealthMax", "GameplayTag.Effect.Modifier.HealthBase");
+				USOGameplayEffectBase* GameplayEffect = Cast<USOGameplayEffectBase>(DefaultMaxSetting->GameplayEffect->GetDefaultObject());
+
+				Initialize_Attribute_With_DefaultMax_Value(UAttributeSetHealth, GetHealthBaseAttribute, GameplayEffect, DefaultMaxSetting, "GameplayTag.Effect.Initialization.Health", "GameplayTag.Effect.Modifier.HealthMax", "GameplayTag.Effect.Modifier.HealthBase");
+				Initialize_Attribute_With_DefaultMax_Value(UAttributeSetStamina, GetStaminaBaseAttribute, GameplayEffect, DefaultMaxSetting, "GameplayTag.Effect.Initialization.Stamina", "GameplayTag.Effect.Modifier.StaminaMax", "GameplayTag.Effect.Modifier.StaminaBase");
 			}
 #pragma endregion
 
-#pragma region DefaultAttribute Stamina Iitialization
-			if (cdo->GetAssetTags().HasAny(FGameplayTagContainer(FGameplayTag::RequestGameplayTag("GameplayTag.Effect.Initialization.Stamina"))))
+#pragma region SingleValue
+
+			UAttributeSettingSingleValue* SingleValueSetting = Cast<UAttributeSettingSingleValue>(AS);
+			if (SingleValueSetting)
 			{
-				UAttributeSetStamina* StaminaSet = NewObject<UAttributeSetStamina>(this);
-				AddAttributeSetSubobject(StaminaSet);
-				InitializeAttributeWithDefaultMaxData(AttributeData, "GameplayTag.Effect.Modifier.StaminaMax", "GameplayTag.Effect.Modifier.StaminaBase");
+				USOGameplayEffectBase* GameplayEffect = Cast<USOGameplayEffectBase>(SingleValueSetting->GameplayEffect->GetDefaultObject());
+				//Regular Attribute
+				Initialize_Attribute_With_Single_Value(UAttributeSetStrength, GameplayEffect, SingleValueSetting, "GameplayTag.Effect.Initialization.Strength", "GameplayTag.Effect.Modifier.StrengthBase");
+				Initialize_Attribute_With_Single_Value(UAttributeSetAgility, GameplayEffect, SingleValueSetting, "GameplayTag.Effect.Initialization.Agility", "GameplayTag.Effect.Modifier.AgilityBase");
+				Initialize_Attribute_With_Single_Value(UAttributeSetIntelligent, GameplayEffect, SingleValueSetting, "GameplayTag.Effect.Initialization.Intelligent", "GameplayTag.Effect.Modifier.IntelligentBase");
+				
+				//Indirect attribute
+				Initialize_Attribute_With_Single_Value(UAttributeSetHealth, GameplayEffect, SingleValueSetting, "GameplayTag.Effect.Initialization.Health", "GameplayTag.Effect.Modifier.HealthBase");
+				Initialize_Attribute_With_Single_Value(UAttributeSetStamina, GameplayEffect, SingleValueSetting, "GameplayTag.Effect.Initialization.Stamina", "GameplayTag.Effect.Modifier.StaminaBase");
 			}
+
 #pragma endregion
 
-#pragma region DefaultAttribute Strength Iitialization
-			if (cdo->GetAssetTags().HasAny(FGameplayTagContainer(FGameplayTag::RequestGameplayTag("GameplayTag.Effect.Initialization.Strength"))))
-			{
-				UAttributeSetStrength* StrengthSet = NewObject<UAttributeSetStrength>(this);
-				AddAttributeSetSubobject(StrengthSet);
-				InitializeAttributeWithDefaultMaxData(AttributeData, "", "GameplayTag.Effect.Modifier.StrengthBase");
-			}
-#pragma endregion
-		}
-	}
+#pragma region Regular Set
 
-	UPDA_AttributeRegular* RegularAttribute = Cast<UPDA_AttributeRegular>(DefaultAttributeData);
-	if (RegularAttribute)
-	{
-		for (auto& AttributeData : RegularAttribute->AttributeData)
-		{
-			USOGameplayEffectBase* cdo = Cast<USOGameplayEffectBase>(AttributeData.GameplayEffect.GetDefaultObject());
-			if (IsValid(AttributeData.GameplayEffect))
+			if (!IsValid(SingleValueSetting) && !IsValid(DefaultMaxSetting))
 			{
+				USOGameplayEffectBase* cdo = Cast<USOGameplayEffectBase>(AS->GameplayEffect.GetDefaultObject());
+
 #pragma region RegularAttribute Strength Iitialization
-				if (cdo->GetAssetTags().HasAny(FGameplayTagContainer(FGameplayTag::RequestGameplayTag("GameplayTag.Effect.Initialization.Strength"))))
+				if (cdo->GetAssetTags().HasAny(FGameplayTagContainer(FGameplayTag::RequestGameplayTag("GameplayTag.Effect.Initialization.Strength", false))))
 				{
-					if (!HasAttributeSetForAttribute(UAttributeSetStrength::GetStrengthBaseAttribute()))
-					{
-						UAttributeSetStrength* StrengthSet = NewObject<UAttributeSetStrength>(this);
-						AddAttributeSetSubobject(StrengthSet);
-					}
-					if (!HasAttributeSetForAttribute(UAttributeSetHeallth::GetHealthBaseAttribute()))
-					{
-						UAttributeSetHeallth* HealthSet = NewObject<UAttributeSetHeallth>(this);
-						AddAttributeSetSubobject(HealthSet);
-					}
-					if (!HasAttributeSetForAttribute(UAttributeSetStatusResistantBase::GetStatusResistantBaseAttribute()))
-					{
-						UAttributeSetStatusResistantBase* StatusResistantSet = NewObject<UAttributeSetStatusResistantBase>(this);
-						AddAttributeSetSubobject(StatusResistantSet);
-					}
-					/*if (!HasAttributeSetForAttribute(UAttributeSetHeallth::GetHealthBaseAttribute()))
-					{
-						UAttributeSetHeallth* HealthSet = NewObject<UAttributeSetHeallth>(this);
-						AddAttributeSetSubobject(HealthSet);
-					}*/
-					InitializeAttributeWithRegularData("GameplayTag.Effect.Modifier.StrengthBase", AttributeData);
-					GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("Initialized StrengthBase"));
-				}
-#pragma endregion
-			}
+					Add_Attribute(UAttributeSetHealth, GetHealthBaseAttribute);
+					Add_Attribute(UAttributeSetStatusResistantBase, GetStatusResistantBaseAttribute);
+					Add_Attribute(UAttributeSetStarving, GetStarvingBaseAttribute);
 
+					FGameplayEffectSpecHandle SpecHandle = MakeOutgoingSpec(AS->GameplayEffect, 1.0f, MakeEffectContext());
+					ApplyGameplayEffectSpecToSelf(*SpecHandle.Data);
+				}
+#pragma endregion	
+
+			}
+			
+
+#pragma endregion
 		}
+
+
 	}
 }
 
-void USOAbilitySystemComponent::InitializeAttributeWithDefaultMaxData(FDefaultMaxData& DefaultData, FName MaxValueTag, FName DefaultValueTag)
+void USOAbilitySystemComponent::InitializeAttributeWithRegularData(TSubclassOf<USOGameplayEffectBase> GameplayEffect)
 {
-	FGameplayEffectSpecHandle SpecHandle = MakeOutgoingSpec(DefaultData.GameplayEffect, 1.0f, MakeEffectContext());
-	if (!MaxValueTag.IsEqual("")) SpecHandle.Data->SetSetByCallerMagnitude(FGameplayTag::RequestGameplayTag(MaxValueTag), DefaultData.MaxValue);
-	SpecHandle.Data->SetSetByCallerMagnitude(FGameplayTag::RequestGameplayTag(DefaultValueTag), DefaultData.DefaultValue);
-	ApplyGameplayEffectSpecToSelf(*SpecHandle.Data);
-}
-
-void USOAbilitySystemComponent::InitializeAttributeWithRegularData(FName SetByCaller , FRegularAttributeData& DefaultData)
-{
-	FGameplayEffectSpecHandle SpecHandle = MakeOutgoingSpec(DefaultData.GameplayEffect, 1.0f, MakeEffectContext());
-	SpecHandle.Data->SetSetByCallerMagnitude(FGameplayTag::RequestGameplayTag(SetByCaller), DefaultData.DefaultValue);
+	FGameplayEffectSpecHandle SpecHandle = MakeOutgoingSpec(GameplayEffect, 1.0f, MakeEffectContext());
 	ApplyGameplayEffectSpecToSelf(*SpecHandle.Data);
 }
 
