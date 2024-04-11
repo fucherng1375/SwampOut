@@ -96,6 +96,8 @@ void ASOCharacterBase::OnRep_PlayerState()
 
 void ASOCharacterBase::PreInitializeComponents()
 {
+	Super::PreInitializeComponents();
+
 }
 
 void ASOCharacterBase::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)

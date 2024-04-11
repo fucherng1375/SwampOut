@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "UObject/NoExportTypes.h"
 #include "AbilitySystem/GameplayEffect/SOGameplayEffectBase.h"
+#include "GameplayTagContainer.h"
 
 #include "AbilitySystem/Attribute/IndirectAttribute/AttributeSetHealth.h"
 #include "AbilitySystem/Attribute/IndirectAttribute/AttributeSetStamina.h"
@@ -17,34 +18,32 @@
 
 #include "AttributeSetting.generated.h"
 
-#define Initialize_Attribute_With_Single_Value(Class, GameplayEffect, SingleValueSetting, InitializeTag, ModifierTag) \
-    if (GameplayEffect->GetAssetTags().HasAny(FGameplayTagContainer(FGameplayTag::RequestGameplayTag(InitializeTag, false)))) \
-    { \
-        Class* AttributeSet = NewObject<Class>(this); \
-        AddAttributeSetSubobject(AttributeSet); \
+#define Initialize_Attribute_With_Single_Value(Class, GetAttributeBaseFunction, GameplayEffect, SingleValueSetting) \
+	{\
+		Add_Attribute(Class, GetAttributeBaseFunction); \
 		FGameplayEffectSpecHandle SpecHandle = MakeOutgoingSpec(SingleValueSetting->GameplayEffect, 1.0f, MakeEffectContext()); \
-		SpecHandle.Data->SetSetByCallerMagnitude(FGameplayTag::RequestGameplayTag(ModifierTag, false), SingleValueSetting->DefaultValue); \
+		SpecHandle.Data->SetSetByCallerMagnitude(SingleValueSetting->BaseValueTag, SingleValueSetting->BaseValue); \
 		ApplyGameplayEffectSpecToSelf(*SpecHandle.Data); \
-    }
+	}
+    
 
-#define Initialize_Attribute_With_DefaultMax_Value(Class, GetAttributeBaseFunction, GameplayEffect, DefaultMaxSetting, InitializeTag, ModifierMaxTag, ModifierBaseTag) \
-	if (GameplayEffect->GetAssetTags().HasAny(FGameplayTagContainer(FGameplayTag::RequestGameplayTag(InitializeTag, false)))) \
+#define Initialize_Attribute_With_DefaultMax_Value(Class, GetAttributeBaseFunction, GameplayEffect, DefaultMaxSetting) \
 	{ \
 		Add_Attribute(Class, GetAttributeBaseFunction); \
 		FGameplayEffectSpecHandle SpecHandle = MakeOutgoingSpec(DefaultMaxSetting->GameplayEffect, 1.0f, MakeEffectContext()); \
-		SpecHandle.Data->SetSetByCallerMagnitude(FGameplayTag::RequestGameplayTag(ModifierMaxTag, false), DefaultMaxSetting->MaxValue); \
-		SpecHandle.Data->SetSetByCallerMagnitude(FGameplayTag::RequestGameplayTag(ModifierBaseTag, false), DefaultMaxSetting->DefaultValue); \
+		SpecHandle.Data->SetSetByCallerMagnitude(DefaultMaxSetting->MaxValueTag, DefaultMaxSetting->MaxValue); \
+		SpecHandle.Data->SetSetByCallerMagnitude(DefaultMaxSetting->BaseValueTag, DefaultMaxSetting->BaseValue); \
 		ApplyGameplayEffectSpecToSelf(*SpecHandle.Data); \
 	}
 
 #define Add_Attribute(Class, GetAttributeBaseFunction) \
 	if (!HasAttributeSetForAttribute(Class::GetAttributeBaseFunction())) \
 	{ \
-		Class* AttributeSet = NewObject<Class>(this); \
+		Class* AttributeSet = NewObject<Class>(GetOwner()); \
 		AddAttributeSetSubobject(AttributeSet); \
 	}
 
-UCLASS(Blueprintable, EditInlineNew)
+UCLASS()
 class SWAMPOUT_API UAttributeSetting : public UObject
 {
 	GENERATED_BODY()
@@ -60,7 +59,13 @@ class SWAMPOUT_API UAttributeSettingDefaultMax : public UAttributeSetting
 
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	float DefaultValue;
+	FGameplayTag BaseValueTag;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float BaseValue;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FGameplayTag MaxValueTag;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float MaxValue;
@@ -72,5 +77,18 @@ class SWAMPOUT_API UAttributeSettingSingleValue : public UAttributeSetting
 	GENERATED_BODY()
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	float DefaultValue;
+	FGameplayTag BaseValueTag;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float BaseValue;
+};
+
+UCLASS(Blueprintable, EditInlineNew)
+class SWAMPOUT_API UAttributeSettingRegular : public UAttributeSetting
+{
+	GENERATED_BODY()
+
+public:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TArray<TSubclassOf<USOAttributeSetBase>> AttributeClass;
 };

@@ -20,10 +20,15 @@ public:
 
 public:
 	virtual void BeginPlay() override;
+	virtual void OnRegister() override;
 	virtual void OnGameplayTaskActivated(UGameplayTask& Task) override;
 	virtual void OnGameplayTaskDeactivated(UGameplayTask& Task) override;
 	virtual void BindAbilityActivationToInputComponent(UInputComponent* InputComponent, FGameplayAbilityInputBinds BindInfo);
 
 private:
+	UFUNCTION(Server, Reliable)
+	void InitializeAttribute();
+	void InitializeAttribute_Implementation();
+
 	void InitializeAttributeWithRegularData(TSubclassOf<USOGameplayEffectBase> GameplayEffect);
 };

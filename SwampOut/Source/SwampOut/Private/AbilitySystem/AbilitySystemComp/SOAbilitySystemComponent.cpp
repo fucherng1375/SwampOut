@@ -9,7 +9,16 @@ USOAbilitySystemComponent::USOAbilitySystemComponent()
 
 void USOAbilitySystemComponent::BeginPlay()
 {
+	InitializeAttribute_Implementation();
+}
 
+void USOAbilitySystemComponent::OnRegister()
+{
+	Super::OnRegister();
+}
+
+void USOAbilitySystemComponent::InitializeAttribute_Implementation()
+{
 	for (auto& AS : DefaultAttributeSetting)
 	{
 		if (IsValid(AS->GameplayEffect))
@@ -19,55 +28,46 @@ void USOAbilitySystemComponent::BeginPlay()
 			if (DefaultMaxSetting)
 			{
 				USOGameplayEffectBase* GameplayEffect = Cast<USOGameplayEffectBase>(DefaultMaxSetting->GameplayEffect->GetDefaultObject());
-
-				Initialize_Attribute_With_DefaultMax_Value(UAttributeSetHealth, GetHealthBaseAttribute, GameplayEffect, DefaultMaxSetting, "GameplayTag.Effect.Initialization.Health", "GameplayTag.Effect.Modifier.HealthMax", "GameplayTag.Effect.Modifier.HealthBase");
-				Initialize_Attribute_With_DefaultMax_Value(UAttributeSetStamina, GetStaminaBaseAttribute, GameplayEffect, DefaultMaxSetting, "GameplayTag.Effect.Initialization.Stamina", "GameplayTag.Effect.Modifier.StaminaMax", "GameplayTag.Effect.Modifier.StaminaBase");
+				
+				//Indirect attribute
+				Initialize_Attribute_With_DefaultMax_Value(UAttributeSetHealth, GetHealthBaseAttribute, GameplayEffect, DefaultMaxSetting);
+				Initialize_Attribute_With_DefaultMax_Value(UAttributeSetStamina, GetStaminaBaseAttribute, GameplayEffect, DefaultMaxSetting);
 			}
 #pragma endregion
-
+			
 #pragma region SingleValue
 
 			UAttributeSettingSingleValue* SingleValueSetting = Cast<UAttributeSettingSingleValue>(AS);
 			if (SingleValueSetting)
 			{
 				USOGameplayEffectBase* GameplayEffect = Cast<USOGameplayEffectBase>(SingleValueSetting->GameplayEffect->GetDefaultObject());
+
 				//Regular Attribute
-				Initialize_Attribute_With_Single_Value(UAttributeSetStrength, GameplayEffect, SingleValueSetting, "GameplayTag.Effect.Initialization.Strength", "GameplayTag.Effect.Modifier.StrengthBase");
-				Initialize_Attribute_With_Single_Value(UAttributeSetAgility, GameplayEffect, SingleValueSetting, "GameplayTag.Effect.Initialization.Agility", "GameplayTag.Effect.Modifier.AgilityBase");
-				Initialize_Attribute_With_Single_Value(UAttributeSetIntelligent, GameplayEffect, SingleValueSetting, "GameplayTag.Effect.Initialization.Intelligent", "GameplayTag.Effect.Modifier.IntelligentBase");
-				
-				//Indirect attribute
-				Initialize_Attribute_With_Single_Value(UAttributeSetHealth, GameplayEffect, SingleValueSetting, "GameplayTag.Effect.Initialization.Health", "GameplayTag.Effect.Modifier.HealthBase");
-				Initialize_Attribute_With_Single_Value(UAttributeSetStamina, GameplayEffect, SingleValueSetting, "GameplayTag.Effect.Initialization.Stamina", "GameplayTag.Effect.Modifier.StaminaBase");
+				Initialize_Attribute_With_Single_Value(UAttributeSetStrength, GetStrengthBaseAttribute, GameplayEffect, SingleValueSetting);
+				Initialize_Attribute_With_Single_Value(UAttributeSetAgility, GetAgilityBaseAttribute, GameplayEffect, SingleValueSetting);
+				Initialize_Attribute_With_Single_Value(UAttributeSetIntelligent, GetIntelligentBaseAttribute, GameplayEffect, SingleValueSetting);
 			}
 
 #pragma endregion
-
+			
 #pragma region Regular Set
 
-			if (!IsValid(SingleValueSetting) && !IsValid(DefaultMaxSetting))
+			TObjectPtr<UAttributeSettingRegular> RegularSetting = Cast<UAttributeSettingRegular>(AS);
+			if (IsValid(RegularSetting))
 			{
 				USOGameplayEffectBase* cdo = Cast<USOGameplayEffectBase>(AS->GameplayEffect.GetDefaultObject());
 
-#pragma region RegularAttribute Strength Iitialization
-				if (cdo->GetAssetTags().HasAny(FGameplayTagContainer(FGameplayTag::RequestGameplayTag("GameplayTag.Effect.Initialization.Strength", false))))
+				for (auto& AC : RegularSetting->AttributeClass)
 				{
-					Add_Attribute(UAttributeSetHealth, GetHealthBaseAttribute);
-					Add_Attribute(UAttributeSetStatusResistantBase, GetStatusResistantBaseAttribute);
-					Add_Attribute(UAttributeSetStarving, GetStarvingBaseAttribute);
-
-					FGameplayEffectSpecHandle SpecHandle = MakeOutgoingSpec(AS->GameplayEffect, 1.0f, MakeEffectContext());
-					ApplyGameplayEffectSpecToSelf(*SpecHandle.Data);
+					const_cast<UAttributeSet*>(GetOrCreateAttributeSubobject(AC));
 				}
-#pragma endregion	
-
+				FGameplayEffectSpecHandle SpecHandle = MakeOutgoingSpec(AS->GameplayEffect, 1.0f, MakeEffectContext());
+				ApplyGameplayEffectSpecToSelf(*SpecHandle.Data);
 			}
-			
+
 
 #pragma endregion
 		}
-
-
 	}
 }
 
