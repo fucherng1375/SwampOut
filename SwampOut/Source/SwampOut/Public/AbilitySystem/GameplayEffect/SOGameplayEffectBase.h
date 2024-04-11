@@ -9,7 +9,7 @@
 /**
  * 
  */
-UCLASS()
+UCLASS(Blueprintable, EditInlineNew)
 class SWAMPOUT_API USOGameplayEffectBase : public UGameplayEffect
 {
 	GENERATED_BODY()

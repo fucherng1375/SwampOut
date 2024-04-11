@@ -2,6 +2,7 @@
 
 
 #include "AbilitySystem/AbilitySystemComp/SOAbilitySystemComponent.h"
+#include "AbilitySystem/AttributeSetting/AttributeSetting.h"
 
 USOAbilitySystemComponent::USOAbilitySystemComponent()
 {
@@ -9,6 +10,7 @@ USOAbilitySystemComponent::USOAbilitySystemComponent()
 
 void USOAbilitySystemComponent::BeginPlay()
 {
+	Super::BeginPlay();
 	InitializeAttribute_Implementation();
 }
 
@@ -21,66 +23,21 @@ void USOAbilitySystemComponent::InitializeAttribute_Implementation()
 {
 	for (auto& AS : DefaultAttributeSetting)
 	{
-		if (IsValid(AS->GameplayEffect))
-		{
-#pragma region Default and Max Value
-			UAttributeSettingDefaultMax* DefaultMaxSetting = Cast<UAttributeSettingDefaultMax>(AS);
-			if (DefaultMaxSetting)
-			{
-				USOGameplayEffectBase* GameplayEffect = Cast<USOGameplayEffectBase>(DefaultMaxSetting->GameplayEffect->GetDefaultObject());
-				
-				//Indirect attribute
-				Initialize_Attribute_With_DefaultMax_Value(DefaultMaxSetting->AttributeClass, GameplayEffect, DefaultMaxSetting);
-			}
-#pragma endregion
-			
-#pragma region SingleValue
+		AS->Run(this);
 
-			UAttributeSettingSingleValue* SingleValueSetting = Cast<UAttributeSettingSingleValue>(AS);
-			if (SingleValueSetting)
-			{
-				USOGameplayEffectBase* GameplayEffect = Cast<USOGameplayEffectBase>(SingleValueSetting->GameplayEffect->GetDefaultObject());
-
-				//Regular Attribute
-				Initialize_Attribute_With_Single_Value(SingleValueSetting->AttributeClass, GameplayEffect, SingleValueSetting);
-			}
-
-#pragma endregion
-			
-#pragma region Regular Set
-
-			TObjectPtr<UAttributeSettingRegular> RegularSetting = Cast<UAttributeSettingRegular>(AS);
-			if (IsValid(RegularSetting))
-			{
-				USOGameplayEffectBase* cdo = Cast<USOGameplayEffectBase>(AS->GameplayEffect.GetDefaultObject());
-
-				for (auto& AC : RegularSetting->AttributeClass)
-				{
-					if(!GetAttributeSubobject(AC)) const_cast<UAttributeSet*>(GetOrCreateAttributeSubobject(AC));
-					
-				}
-				FGameplayEffectSpecHandle SpecHandle = MakeOutgoingSpec(AS->GameplayEffect, 1.0f, MakeEffectContext());
-				ApplyGameplayEffectSpecToSelf(*SpecHandle.Data);
-			}
-
-
-#pragma endregion
-		}
+		AS->MarkAsGarbage();
 	}
-}
-
-void USOAbilitySystemComponent::InitializeAttributeWithRegularData(TSubclassOf<USOGameplayEffectBase> GameplayEffect)
-{
-	FGameplayEffectSpecHandle SpecHandle = MakeOutgoingSpec(GameplayEffect, 1.0f, MakeEffectContext());
-	ApplyGameplayEffectSpecToSelf(*SpecHandle.Data);
+	DefaultAttributeSetting.Empty();
 }
 
 void USOAbilitySystemComponent::OnGameplayTaskActivated(UGameplayTask& Task)
 {
+	Super::OnGameplayTaskActivated(Task);
 }
 
 void USOAbilitySystemComponent::OnGameplayTaskDeactivated(UGameplayTask& Task)
 {
+	Super::OnGameplayTaskDeactivated(Task);
 }
 
 void USOAbilitySystemComponent::BindAbilityActivationToInputComponent(UInputComponent* InputComponent, FGameplayAbilityInputBinds BindInfo)

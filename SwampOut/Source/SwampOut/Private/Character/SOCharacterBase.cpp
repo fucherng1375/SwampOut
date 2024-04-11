@@ -102,7 +102,7 @@ void ASOCharacterBase::PreInitializeComponents()
 
 void ASOCharacterBase::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
-	check(PlayerInputComponent);
+	Super::SetupPlayerInputComponent(PlayerInputComponent);
 
 	if (AbilitySystemComponent && InputComponent)
 	{

@@ -4,8 +4,10 @@
 
 #include "CoreMinimal.h"
 #include "AbilitySystemComponent.h"
-#include "AbilitySystem/AttributeSetting/AttributeSetting.h"
 #include "SOAbilitySystemComponent.generated.h"
+
+class UAttributeSetting;
+class USOGameplayEffectBase;
 
 UCLASS()
 class SWAMPOUT_API USOAbilitySystemComponent : public UAbilitySystemComponent
@@ -23,12 +25,10 @@ public:
 	virtual void OnRegister() override;
 	virtual void OnGameplayTaskActivated(UGameplayTask& Task) override;
 	virtual void OnGameplayTaskDeactivated(UGameplayTask& Task) override;
-	virtual void BindAbilityActivationToInputComponent(UInputComponent* InputComponent, FGameplayAbilityInputBinds BindInfo);
+	virtual void BindAbilityActivationToInputComponent(UInputComponent* InputComponent, FGameplayAbilityInputBinds BindInfo) override;
 
 private:
 	UFUNCTION(Server, Reliable)
 	void InitializeAttribute();
 	void InitializeAttribute_Implementation();
-
-	void InitializeAttributeWithRegularData(TSubclassOf<USOGameplayEffectBase> GameplayEffect);
 };
