@@ -18,30 +18,26 @@
 
 #include "AttributeSetting.generated.h"
 
-#define Initialize_Attribute_With_Single_Value(Class, GetAttributeBaseFunction, GameplayEffect, SingleValueSetting) \
+#define Initialize_Attribute_With_Single_Value(Class, GameplayEffect, SingleValueSetting) \
 	{\
-		Add_Attribute(Class, GetAttributeBaseFunction); \
+		Add_Attribute(Class); \
 		FGameplayEffectSpecHandle SpecHandle = MakeOutgoingSpec(SingleValueSetting->GameplayEffect, 1.0f, MakeEffectContext()); \
 		SpecHandle.Data->SetSetByCallerMagnitude(SingleValueSetting->BaseValueTag, SingleValueSetting->BaseValue); \
 		ApplyGameplayEffectSpecToSelf(*SpecHandle.Data); \
 	}
     
 
-#define Initialize_Attribute_With_DefaultMax_Value(Class, GetAttributeBaseFunction, GameplayEffect, DefaultMaxSetting) \
+#define Initialize_Attribute_With_DefaultMax_Value(Class, GameplayEffect, DefaultMaxSetting) \
 	{ \
-		Add_Attribute(Class, GetAttributeBaseFunction); \
+		Add_Attribute(Class); \
 		FGameplayEffectSpecHandle SpecHandle = MakeOutgoingSpec(DefaultMaxSetting->GameplayEffect, 1.0f, MakeEffectContext()); \
 		SpecHandle.Data->SetSetByCallerMagnitude(DefaultMaxSetting->MaxValueTag, DefaultMaxSetting->MaxValue); \
 		SpecHandle.Data->SetSetByCallerMagnitude(DefaultMaxSetting->BaseValueTag, DefaultMaxSetting->BaseValue); \
 		ApplyGameplayEffectSpecToSelf(*SpecHandle.Data); \
 	}
 
-#define Add_Attribute(Class, GetAttributeBaseFunction) \
-	if (!HasAttributeSetForAttribute(Class::GetAttributeBaseFunction())) \
-	{ \
-		Class* AttributeSet = NewObject<Class>(GetOwner()); \
-		AddAttributeSetSubobject(AttributeSet); \
-	}
+#define Add_Attribute(Class) \
+	if(!GetAttributeSubobject(Class)) const_cast<UAttributeSet*>(GetOrCreateAttributeSubobject(Class));\
 
 UCLASS()
 class SWAMPOUT_API UAttributeSetting : public UObject
@@ -58,6 +54,10 @@ class SWAMPOUT_API UAttributeSettingDefaultMax : public UAttributeSetting
 	GENERATED_BODY()
 
 public:
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TSubclassOf<USOAttributeSetBase> AttributeClass;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FGameplayTag BaseValueTag;
 
@@ -76,6 +76,9 @@ class SWAMPOUT_API UAttributeSettingSingleValue : public UAttributeSetting
 {
 	GENERATED_BODY()
 public:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TSubclassOf<USOAttributeSetBase> AttributeClass;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FGameplayTag BaseValueTag;
 

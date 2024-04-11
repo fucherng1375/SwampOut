@@ -30,8 +30,7 @@ void USOAbilitySystemComponent::InitializeAttribute_Implementation()
 				USOGameplayEffectBase* GameplayEffect = Cast<USOGameplayEffectBase>(DefaultMaxSetting->GameplayEffect->GetDefaultObject());
 				
 				//Indirect attribute
-				Initialize_Attribute_With_DefaultMax_Value(UAttributeSetHealth, GetHealthBaseAttribute, GameplayEffect, DefaultMaxSetting);
-				Initialize_Attribute_With_DefaultMax_Value(UAttributeSetStamina, GetStaminaBaseAttribute, GameplayEffect, DefaultMaxSetting);
+				Initialize_Attribute_With_DefaultMax_Value(DefaultMaxSetting->AttributeClass, GameplayEffect, DefaultMaxSetting);
 			}
 #pragma endregion
 			
@@ -43,9 +42,7 @@ void USOAbilitySystemComponent::InitializeAttribute_Implementation()
 				USOGameplayEffectBase* GameplayEffect = Cast<USOGameplayEffectBase>(SingleValueSetting->GameplayEffect->GetDefaultObject());
 
 				//Regular Attribute
-				Initialize_Attribute_With_Single_Value(UAttributeSetStrength, GetStrengthBaseAttribute, GameplayEffect, SingleValueSetting);
-				Initialize_Attribute_With_Single_Value(UAttributeSetAgility, GetAgilityBaseAttribute, GameplayEffect, SingleValueSetting);
-				Initialize_Attribute_With_Single_Value(UAttributeSetIntelligent, GetIntelligentBaseAttribute, GameplayEffect, SingleValueSetting);
+				Initialize_Attribute_With_Single_Value(SingleValueSetting->AttributeClass, GameplayEffect, SingleValueSetting);
 			}
 
 #pragma endregion
@@ -59,7 +56,8 @@ void USOAbilitySystemComponent::InitializeAttribute_Implementation()
 
 				for (auto& AC : RegularSetting->AttributeClass)
 				{
-					const_cast<UAttributeSet*>(GetOrCreateAttributeSubobject(AC));
+					if(!GetAttributeSubobject(AC)) const_cast<UAttributeSet*>(GetOrCreateAttributeSubobject(AC));
+					
 				}
 				FGameplayEffectSpecHandle SpecHandle = MakeOutgoingSpec(AS->GameplayEffect, 1.0f, MakeEffectContext());
 				ApplyGameplayEffectSpecToSelf(*SpecHandle.Data);
