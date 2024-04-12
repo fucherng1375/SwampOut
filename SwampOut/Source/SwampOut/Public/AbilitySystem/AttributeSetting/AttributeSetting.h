@@ -6,37 +6,8 @@
 #include "UObject/NoExportTypes.h"
 #include "AbilitySystem/GameplayEffect/SOGameplayEffectBase.h"
 #include "GameplayTagContainer.h"
-#include "AbilitySystem/Attribute/IndirectAttribute/AttributeSetHealth.h"
-#include "AbilitySystem/Attribute/IndirectAttribute/AttributeSetStamina.h"
-#include "AbilitySystem/Attribute/IndirectAttribute/AttributeSetStatusResistantBase.h"
-#include "AbilitySystem/Attribute/IndirectAttribute/AttributeSetStarving.h"
-
-#include "AbilitySystem/Attribute/RegularAttribute/AttributeSetStrength.h"
-#include "AbilitySystem/Attribute/RegularAttribute/AttributeSetAgility.h"
-#include "AbilitySystem/Attribute/RegularAttribute/AttributeSetIntelligent.h"
-
+#include "AbilitySystem/Attribute/SOAttributeSetBase.h"
 #include "AttributeSetting.generated.h"
-
-// #define Initialize_Attribute_With_Single_Value(Class, GameplayEffect, SingleValueSetting) \
-// 	{\
-// 		Add_Attribute(Class); \
-// 		FGameplayEffectSpecHandle SpecHandle = MakeOutgoingSpec(SingleValueSetting->GameplayEffect, 1.0f, MakeEffectContext()); \
-// 		SpecHandle.Data->SetSetByCallerMagnitude(SingleValueSetting->BaseValueTag, SingleValueSetting->BaseValue); \
-// 		ApplyGameplayEffectSpecToSelf(*SpecHandle.Data); \
-// 	}
-    
-
-// #define Initialize_Attribute_With_DefaultMax_Value(Class, GameplayEffect, DefaultMaxSetting) \
-// 	{ \
-// 		Add_Attribute(Class); \
-// 		FGameplayEffectSpecHandle SpecHandle = MakeOutgoingSpec(GameplayEffect, 1.0f, MakeEffectContext()); \
-// 		SpecHandle.Data->SetSetByCallerMagnitude(MaxValueTag, MaxValue); \
-// 		SpecHandle.Data->SetSetByCallerMagnitude(BaseValueTag, BaseValue); \
-// 		ApplyGameplayEffectSpecToSelf(*SpecHandle.Data); \
-// 	}
-
-// #define Add_Attribute(Class) \
-// 	if(!GetAttributeSubobject(Class)) const_cast<UAttributeSet*>(GetOrCreateAttributeSubobject(Class));\
 
 class UAbilitySystemComponent;
 
