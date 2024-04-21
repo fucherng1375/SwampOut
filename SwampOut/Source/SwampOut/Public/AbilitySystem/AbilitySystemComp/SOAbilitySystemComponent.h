@@ -8,6 +8,7 @@
 
 class UAttributeSetting;
 class USOGameplayEffectBase;
+class USOGameplayAbilityBase;
 
 UCLASS()
 class SWAMPOUT_API USOAbilitySystemComponent : public UAbilitySystemComponent
@@ -17,8 +18,11 @@ class SWAMPOUT_API USOAbilitySystemComponent : public UAbilitySystemComponent
 	USOAbilitySystemComponent();
 public:
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Instanced)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Instanced, meta = (Category = "Default Setting"))
 	TArray<TObjectPtr<UAttributeSetting>> DefaultAttributeSetting;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (Category = "Default Setting"))
+	TArray<TSubclassOf<USOGameplayAbilityBase>> DefaultAbility;
 
 public:
 	virtual void BeginPlay() override;
@@ -26,9 +30,10 @@ public:
 	virtual void OnGameplayTaskActivated(UGameplayTask& Task) override;
 	virtual void OnGameplayTaskDeactivated(UGameplayTask& Task) override;
 	virtual void BindAbilityActivationToInputComponent(UInputComponent* InputComponent, FGameplayAbilityInputBinds BindInfo) override;
+	virtual void OnGiveAbility(FGameplayAbilitySpec& AbilitySpec) override;
 
 private:
 	UFUNCTION(Server, Reliable)
-	void InitializeAttribute();
-	void InitializeAttribute_Implementation();
+	void InitializeDefaultData();
+	void InitializeDefaultData_Implementation();
 };

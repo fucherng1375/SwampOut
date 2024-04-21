@@ -104,13 +104,6 @@ void ASOCharacterBase::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 
-	if (AbilitySystemComponent && InputComponent)
-	{
-		const FTopLevelAssetPath AssestPath (TEXT("/Script/SwampOut"), TEXT("ESOAbilityInputID"));
-		const FGameplayAbilityInputBinds Binds("Confirm", "Cancel", AssestPath, static_cast<int32>(ESOAbilityInputID::Confirm), static_cast<int32>(ESOAbilityInputID::Cancel));
-		AbilitySystemComponent->BindAbilityActivationToInputComponent(InputComponent, Binds);
-	}
-
 	// Add Input Mapping Context
 	if (APlayerController* PlayerController = Cast<APlayerController>(GetController()))
 	{
