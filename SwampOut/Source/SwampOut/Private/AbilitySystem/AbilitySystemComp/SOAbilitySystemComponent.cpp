@@ -15,6 +15,12 @@ void USOAbilitySystemComponent::BeginPlay()
 {
 	Super::BeginPlay();
 	InitializeDefaultData_Implementation();
+#pragma region Initialize Default Ability
+	for (auto& GA : DefaultAbility)
+	{
+		GiveAbility(FGameplayAbilitySpec(GA));
+	}
+#pragma endregion
 }
 
 void USOAbilitySystemComponent::OnRegister()
@@ -32,14 +38,6 @@ void USOAbilitySystemComponent::InitializeDefaultData_Implementation()
 		AS->MarkAsGarbage();
 	}
 	DefaultAttributeSetting.Empty();
-#pragma endregion
-
-
-#pragma region Initialize Default Ability
-	for (auto& GA : DefaultAbility)
-	{
-		GiveAbility(FGameplayAbilitySpec(GA));
-	}
 #pragma endregion
 }
 
