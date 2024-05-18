@@ -2,25 +2,26 @@
 
 
 #include "AbilitySystem/AbilitySystemComp/SOAbilitySystemComponent.h"
-#include "AbilitySystem/AttributeSetting/AttributeSetting.h"
 #include "AbilitySystem/GameplayAbility/SOGameplayAbilityBase.h"
+#include "AbilitySystem/AttributeSetting/AttributeSetting.h"
+#include "GameFramework/Character.h"
 #include "AbilitySystem/ProjectSetting/SO_GameplayInput_Settings.h"
-#include "EnhancedInputComponent.h"
+#include "Net/UnrealNetwork.h"
 
 USOAbilitySystemComponent::USOAbilitySystemComponent()
 {
+}
+
+void USOAbilitySystemComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	//DOREPLIFETIME_CONDITION_NOTIFY(USOAbilitySystemComponent, , COND_None, REPNOTIFY_Always);
 }
 
 void USOAbilitySystemComponent::BeginPlay()
 {
 	Super::BeginPlay();
 	InitializeDefaultData_Implementation();
-#pragma region Initialize Default Ability
-	for (auto& GA : DefaultAbility)
-	{
-		GiveAbility(FGameplayAbilitySpec(GA));
-	}
-#pragma endregion
 }
 
 void USOAbilitySystemComponent::OnRegister()
@@ -38,6 +39,13 @@ void USOAbilitySystemComponent::InitializeDefaultData_Implementation()
 		AS->MarkAsGarbage();
 	}
 	DefaultAttributeSetting.Empty();
+#pragma endregion
+
+#pragma region Initialize Default Ability
+	for (auto& GA : DefaultAbility)
+	{
+		GiveAbility(FGameplayAbilitySpec(GA));
+	}
 #pragma endregion
 }
 
@@ -59,20 +67,45 @@ void USOAbilitySystemComponent::BindAbilityActivationToInputComponent(UInputComp
 void USOAbilitySystemComponent::OnGiveAbility(FGameplayAbilitySpec& AbilitySpec)
 {
 	Super::OnGiveAbility(AbilitySpec);
-	USOGameplayAbilityBase* GA = Cast<USOGameplayAbilityBase>(AbilitySpec.Ability);
-	USO_GameplayInput_Settings* GasSetting = GetMutableDefault<USO_GameplayInput_Settings>();
+	//Assagin a input ID for ability
 
-	if (IsValid(GasSetting) && IsValid(GA) && GA->InputType == EInputType::Player)
+	if (USOGameplayAbilityBase* GABase = Cast<USOGameplayAbilityBase>(AbilitySpec.Ability))
 	{
-		AbilitySpec.InputID = GasSetting->AbilityInputIndex.Contains(GA->PlayerInputAction) ? *GasSetting->AbilityInputIndex.Find(GA->PlayerInputAction) : -1;
-		if (UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(GetOwner()->InputComponent))
+		AbilitySpec.InputID = DefaultAbilityInputIndex.Contains(GABase->GetInputAction()) ? *DefaultAbilityInputIndex.Find(GABase->GetInputAction()) : -1;
+
+
+		TArray<TSubclassOf<USOGameplayAbilityInput>> ExtraTriggerAbility;
+		if (UGAInputSetting_Player* PlayerInputSetting = Cast<UGAInputSetting_Player>(GABase->GAInputSetting))
+		{
+			for (auto& AdditionalGA : PlayerInputSetting->ExtraActionInput)
+			{
+				int32 InputID = DefaultAbilityInputIndex.Contains(AdditionalGA.GetDefaultObject()->GetInputAction()) ? *DefaultAbilityInputIndex.Find(AdditionalGA.GetDefaultObject()->GetInputAction()) : INDEX_NONE;
+				const FGameplayAbilitySpec& InputAbilitySpec = FGameplayAbilitySpec(AdditionalGA, 1, InputID, GetOwner());
+				GiveAbility(FGameplayAbilitySpec(InputAbilitySpec));
+				ExtraTriggerAbility.Add(AdditionalGA);
+			}
+		}
+		if (AbilitySpec.GetPrimaryInstance())
+		{
+			AdvancedAbilityContainer->AdvancedAbiliesHandle.Add(FAdvancedAbility(Cast<USOGameplayAbilityBase>(AbilitySpec.GetPrimaryInstance()), MoveTemp(ExtraTriggerAbility)));
+		}
+	}
+
+}
+
+void USOAbilitySystemComponent::BindAbilitiesToInput(UInputComponent* PlayerInputComponent)
+{
+	if (UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(PlayerInputComponent))
+	{
+		for (auto InputID : DefaultAbilityInputIndex)
 		{
 			EnhancedInputComponent->BindActionValueLambda(
-				GA->PlayerInputAction,
+				InputID.Key,
 				ETriggerEvent::Triggered,
-				[&](const FInputActionValue& InputActionValue)
+				[&, index = InputID.Value](const FInputActionValue& InputActionValue)
 				{
-					AbilityLocalInputPressed(AbilitySpec.InputID);
+					AbilityLocalInputPressed(index);
+					//GEngine->AddOnScreenDebugMessage(-1, 5.f, GetOwner()->HasAuthority() ? FColor::Red : FColor::Green, TEXT("o0o"));
 				});
 		}
 	}

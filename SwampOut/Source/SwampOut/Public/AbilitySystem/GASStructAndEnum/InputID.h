@@ -5,6 +5,13 @@
 #include "CoreMinimal.h"
 
 UENUM(BlueprintType)
+enum class EInputType : uint8
+{
+	Player,
+	Ai
+};
+
+UENUM(BlueprintType)
 enum class ESOAbilityInputID : uint8
 {
 	None,
