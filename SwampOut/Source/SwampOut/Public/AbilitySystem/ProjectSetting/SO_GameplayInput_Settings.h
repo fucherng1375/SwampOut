@@ -9,11 +9,9 @@
 /**
  * 
  */
-UCLASS(meta = (DisplayName = "SO Ability System Setting"))
+UCLASS(Config = Game, meta = (DisplayName = "SO Ability System Setting"))
 class SWAMPOUT_API USO_GameplayInput_Settings : public UDeveloperSettings
 {
 	GENERATED_BODY()
-public:
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, meta = (Category = "Ability System Setting| Input Setting", DisplayName = "Index for input to trigger"))
-	TMap<TObjectPtr<class UInputAction>, int32> AbilityInputIndex;
+
 };

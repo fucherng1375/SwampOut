@@ -3,3 +3,8 @@
 
 #include "PlayerController/SOPlayerController.h"
 
+void ASOPlayerController::Tick(float DeltaSeconds)
+{
+	Super::Tick(DeltaSeconds);
+	PlayerTickDelegate.Broadcast(DeltaSeconds);
+}

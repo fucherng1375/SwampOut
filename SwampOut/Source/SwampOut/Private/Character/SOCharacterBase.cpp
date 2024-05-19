@@ -100,9 +100,16 @@ void ASOCharacterBase::PreInitializeComponents()
 
 }
 
+void ASOCharacterBase::PostInitializeComponents()
+{
+	Super::PostInitializeComponents();
+}
+
 void ASOCharacterBase::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
+	
+	AbilitySystemComponent->BindAbilitiesToInput(PlayerInputComponent);
 
 	// Add Input Mapping Context
 	if (APlayerController* PlayerController = Cast<APlayerController>(GetController()))
@@ -114,12 +121,8 @@ void ASOCharacterBase::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 	}
 
 	// Set up action bindings
-	if (UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(PlayerInputComponent)) {
-
-		// Jumping
-		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Started, this, &ACharacter::Jump);
-		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &ACharacter::StopJumping);
-
+	if (UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(PlayerInputComponent)) 
+	{
 		// Moving
 		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &ASOCharacterBase::Move);
 
