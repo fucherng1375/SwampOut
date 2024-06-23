@@ -42,7 +42,7 @@ struct FBuildingSingleLevelData
 public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	TSubclassOf<class ASO_Building_Base_Level> Level;
+	TSubclassOf<ASO_Building_Base> Level;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	bool Repeat = true;
@@ -70,7 +70,7 @@ public:
 	}
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	TArray<TSubclassOf<class ASO_Building_Base_GroundFloor>> RandomGroundFloor = TArray<TSubclassOf<class ASO_Building_Base_GroundFloor>>();
+	TArray<TSubclassOf<ASO_Building_Base>> RandomGroundFloor = TArray<TSubclassOf<ASO_Building_Base>>();
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	TArray<FBuildingSingleLevelData> PossibleLevel = TArray<FBuildingSingleLevelData>();
