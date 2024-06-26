@@ -6,6 +6,7 @@
 #include "BuildingProducer/SO_Building_Base.h"
 #include "SO_Building_Manager.generated.h"
 
+
 UCLASS()
 class SWAMPOUT_API ASO_Building_Manager : public AActor
 {

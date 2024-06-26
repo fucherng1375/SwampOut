@@ -57,11 +57,11 @@ void ASO_Building_Manager::Auth_SpawnBuilding()
 
 	int32 NumberOfLevel = FMath::RandRange(RandomNumberOfLevelInRange.Min, RandomNumberOfLevelInRange.Max);
 
-	TArray<FBuildingSingleLevelData> FilteredLevels = TArray<FBuildingSingleLevelData>();
-	FilteredLevels.Reserve(NumberOfLevel);
+	TArray<FBuildingSingleLevelData> ReadyToSpawns = TArray<FBuildingSingleLevelData>();
+	ReadyToSpawns.Reserve(NumberOfLevel);
 
-	TArray<TSubclassOf<ASO_Building_Base>> ReadyToSpawns = TArray<TSubclassOf<ASO_Building_Base>>();
-	ReadyToSpawns.Reserve(NumberOfLevel + 1);
+	TMap<EVariant, float> AllEntries = TMap<EVariant, float>();
+	ReadyToSpawns.Reserve(NumberOfLevel);
 
 	TArray<EVariant> CurrentExitID = TArray<EVariant>();
 	CurrentExitID.Reserve(NumberOfLevel + 1);
@@ -70,26 +70,30 @@ void ASO_Building_Manager::Auth_SpawnBuilding()
 	TSubclassOf<ASO_Building_Base> GroundFloor = FindRow->RandomGroundFloor[FMath::RandRange(0 , (FindRow->RandomGroundFloor.Num() - 1))];
 	if (!IsValid(GroundFloor)) return;
 	CurrentExitID.Add(GroundFloor->GetDefaultObject<ASO_Building_Base>()->ExitID);
-	ReadyToSpawns.Add(GroundFloor);
+	ReadyToSpawns.Add(FBuildingSingleLevelData(GroundFloor));
 
-	const auto GetRandomLevel = [&](const TArray<FBuildingSingleLevelData>& PossibleLevel)
+	const auto GetRandomLevel = [&](const TArray<FBuildingSingleLevelData>& PossibleLevel, TMap<EVariant, float>& CurrentEntries)
 		{
 			int32 TotalLength = PossibleLevel.Num();
-			int32 LoopIndex = 0;
-			float Random = FMath::RandRange(0.0f,2.0f);
-			for (const auto& Level : PossibleLevel)
+			float Random = FMath::RandRange(0.0f,1.5f);
+			for (const auto& Data : PossibleLevel)
 			{
-				LoopIndex++;
-				if (Random <= Level.SpawnWeight)
+				//int32 FindIndex = CurrentLevels.FindLast(Data.Level);
+				//bool CheckSame = FindIndex != -1 ? ((CurrentLevels.Num() - 1) - FindIndex) > FMath::RandRange(Data.RandomRepeatAfterCertainLevel.Min, Data.RandomRepeatAfterCertainLevel.Max) : true;
+				//if (Random <= Data.SpawnWeight && CheckSame) return Data;
+
+				EVariant EntryID = Data.Level->GetDefaultObject<ASO_Building_Base>()->EntryID;
+				bool bSpawnWeight = CurrentEntries.Contains(EntryID) ? *CurrentEntries.Find(EntryID) > 0.0f : true;
+				if (Random <= Data.SpawnWeight && bSpawnWeight)
 				{
-					return Level; 
-				}
-				else if (LoopIndex == TotalLength)
-				{
-					return Level;
+					if (CurrentEntries.Contains(EntryID))
+					{
+						CurrentEntries[EntryID] -= 1;
+					}
+					return Data;
 				}
 			}
-			return FBuildingSingleLevelData();
+			return PossibleLevel[PossibleLevel.Num()-1];
 		};
 
 	//InitializeUpperFloor
@@ -100,21 +104,21 @@ void ASO_Building_Manager::Auth_SpawnBuilding()
 		
 		const TArray<FBuildingSingleLevelData>& LevelData = SeparateVariant.Find(CurrentExitID[FindIndex])->PossibleLevel;
 
-		const FBuildingSingleLevelData& SpawnLevel = GetRandomLevel(LevelData);
+		const FBuildingSingleLevelData& SpawnLevel = GetRandomLevel(LevelData, AllEntries);
 		if (!IsValid(SpawnLevel.Level)) continue;
 
 		//UE_LOG(LogTemp, Warning, TEXT("Level-> %s"), *SpawnLevel.Level->GetName());
 
 		CurrentExitID.Add(SpawnLevel.Level->GetDefaultObject<ASO_Building_Base>()->ExitID);
-		FilteredLevels.Add(SpawnLevel);
-		ReadyToSpawns.Add(SpawnLevel.Level);
+		ReadyToSpawns.Add(SpawnLevel);
+		AllEntries.Add(SpawnLevel.Level->GetDefaultObject<ASO_Building_Base>()->EntryID, SpawnLevel.SpawnWeight);
 	}
 
 	//Spawn
-	for (auto& level : ReadyToSpawns)
+	for (auto& Data : ReadyToSpawns)
 	{
 		FTransform SpawnTransform;
-		CacheLevel.Add(GetWorld()->SpawnActor<ASO_Building_Base>(level, SpawnTransform));
+		CacheLevel.Add(GetWorld()->SpawnActor<ASO_Building_Base>(Data.Level, SpawnTransform));
 		OnSpawningLevel(CacheLevel[CacheLevel.Num() - 1]);
 	}
 }

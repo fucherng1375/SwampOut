@@ -40,6 +40,8 @@ struct FBuildingSingleLevelData
 	GENERATED_BODY()
 
 public:
+	FBuildingSingleLevelData() {}
+	FBuildingSingleLevelData(const TSubclassOf<ASO_Building_Base>& Level):Level(Level){}
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	TSubclassOf<ASO_Building_Base> Level;
@@ -54,7 +56,7 @@ public:
 	FIntMinMax MinMaxSpawn = FIntMinMax(1, 1);
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	FVector2D RandomRepeatAfterCertainLevel = FVector2D(1,2);
+	FIntMinMax RandomRepeatAfterCertainLevel = FIntMinMax(1,2);
 };
 
 USTRUCT(BlueprintType)
@@ -106,7 +108,6 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	EVariant ExitID;
-
 
 protected:
 	// Called when the game starts or when spawned
