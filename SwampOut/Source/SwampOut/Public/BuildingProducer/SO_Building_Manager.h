@@ -6,6 +6,45 @@
 #include "BuildingProducer/SO_Building_Base.h"
 #include "SO_Building_Manager.generated.h"
 
+UCLASS()
+class SWAMPOUT_API UBuildingSetting : public UObject
+{
+public:
+	GENERATED_BODY()
+	UBuildingSetting() {}
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	int32 ID;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	FIntMinMax RandomNumberOfLevelInRange = FIntMinMax(1, 3);
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	TObjectPtr<UDataTable> DataTable;
+
+	virtual void Auth_SpawnBuilding() {};
+};
+
+UCLASS(EditInlineNew)
+class SWAMPOUT_API UBuildingSetting1D final : public UBuildingSetting
+{
+public:
+	GENERATED_BODY()
+	UBuildingSetting1D() {}
+
+	virtual void Auth_SpawnBuilding() override;
+};
+
+UCLASS(EditInlineNew)
+class SWAMPOUT_API UBuildingSetting3D final : public UBuildingSetting
+{
+public:
+	GENERATED_BODY()
+	UBuildingSetting3D() {}
+
+	virtual void Auth_SpawnBuilding() override;
+};
+
 
 UCLASS()
 class SWAMPOUT_API ASO_Building_Manager : public AActor
@@ -27,6 +66,8 @@ public:
 #pragma region EditAnywhere Custom Setting - Variable
 
 public:
+	UPROPERTY(EditAnywhere, Instanced)
+	TObjectPtr<UBuildingSetting> BuildingSetting;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	int32 ID;
@@ -39,36 +80,25 @@ public:
 
 #pragma endregion
 
-#pragma region Building runtime caching data  - Variable
 public:
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
 	TArray<TObjectPtr<ASO_Building_Base>> CacheLevel = TArray<TObjectPtr<ASO_Building_Base>>();
-#pragma endregion
 
-#pragma region Cache data after compile  - Variable
 private:
 	UPROPERTY(VisibleAnywhere)
 	TMap<EVariant, FBuildingMultipleLevelData> SeparateVariant = TMap<EVariant, FBuildingMultipleLevelData>();
 
-#pragma endregion
 
-#pragma region Call in Editor - Function
 public:
 	UFUNCTION(CallInEditor)
 	void ClassifyBuildingData();
-#pragma endregion
 
-
-#pragma region BlueprintImplementableEvent - Function
-public:
 	UFUNCTION(BlueprintImplementableEvent)
 	void OnSpawningLevel(ASO_Building_Base* Level);
 
-#pragma endregion
 
 #pragma region C++ Private Native Function - Function
 private:
-	void Auth_SpawnBuildingOld();
 	void Auth_SpawnBuilding();
 #pragma endregion
 };
