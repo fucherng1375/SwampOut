@@ -7,10 +7,17 @@
 #include "Math/UnrealMathUtility.h"
 #include "SO_Building_Base.generated.h"
 
+UENUM(BlueprintType)
+enum class EBuildingGenerateDimension : uint8
+{
+	OneDimension,
+	ThreeDimension
+};
 
 UENUM(BlueprintType)
 enum class EVariant : uint8
 {
+	None,
 	Variant1,
 	Variant2,
 	Variant3,
@@ -95,6 +102,63 @@ public:
 };
 
 UCLASS()
+class SWAMPOUT_API UBuildingType : public UObject
+{
+public:
+	GENERATED_BODY()
+	UBuildingType() {}
+
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
+	EBuildingGenerateDimension BuildingGenerateDimension;
+};
+
+UCLASS()
+class SWAMPOUT_API UBuildingType1D final : public UBuildingType
+{
+public:
+	GENERATED_BODY()
+	UBuildingType1D() 
+	{
+		BuildingGenerateDimension = EBuildingGenerateDimension::OneDimension;
+	}
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	EVariant EntryID;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	EVariant ExitID;
+};
+
+UCLASS()
+class SWAMPOUT_API UBuildingType3D final : public UBuildingType
+{
+public:
+	GENERATED_BODY()
+	UBuildingType3D() 
+	{
+		BuildingGenerateDimension = EBuildingGenerateDimension::ThreeDimension;
+	}
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	EVariant FrontID;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	EVariant BackID;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	EVariant LeftID;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	EVariant RightID;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	EVariant TopID;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	EVariant BottomID;
+};
+
+UCLASS()
 class SWAMPOUT_API ASO_Building_Base : public AActor
 {
 	GENERATED_BODY()
@@ -103,11 +167,13 @@ public:
 	// Sets default values for this actor's properties
 	ASO_Building_Base();
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	TObjectPtr<UBuildingType> BuildingGenerateType;
+
+	/*UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	EVariant EntryID;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	EVariant ExitID;
+	EVariant ExitID;*/
 
 protected:
 	// Called when the game starts or when spawned

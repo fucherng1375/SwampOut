@@ -6,7 +6,7 @@
 #include "UObject/Interface.h"
 #include "SOInterface_Building.generated.h"
 
-enum class EBuildingVariant : uint8;
+enum class EBuildingGenerateDimension : uint8;
 // This class does not need to be modified.
 UINTERFACE(MinimalAPI)
 class USOInterface_Building : public UInterface
@@ -24,5 +24,5 @@ class SWAMPOUT_API ISOInterface_Building
 	// Add interface functions to this class. This is the class that will be inherited to implement this interface.
 public:
 
-	virtual EBuildingVariant GetNextVariant() = 0;
+	virtual EBuildingGenerateDimension GetBuildingGenerateDimension() = 0;
 };
