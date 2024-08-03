@@ -24,13 +24,13 @@ void ASO_Building_Manager::Tick(float DeltaTime)
 
 void ASO_Building_Manager::Auth_SpawnBuilding()
 {
-	if (!HasAuthority() || !IsValid(DataTable)) return;
+	if (!HasAuthority() || !IsValid(DataTable) || !IsValid(GetWorld()) || GetWorld()->bIsTearingDown) return;
 	FBuildingVariantData* FindRow = DataTable->FindRow<FBuildingVariantData>(FName(FString::FromInt(DataTableID)), FString());
 	if (!FindRow || FindRow->StartedRooms.Num() == 0) return; 
 
 	int32 NumberOfHeight = FMath::RandRange(RandomNumberOfHeight.X, RandomNumberOfHeight.Y);
 
-	TArray<TSubclassOf<ASO_Building_Base>> SpawnRooms = TArray<TSubclassOf<ASO_Building_Base>>();
+	TArray<ASO_Building_Base*> SpawnRooms;
 
 	int32 TotalWidth = LengthAndWidth.X * LengthAndWidth.Y;
 	int32 TotalRooms = TotalWidth * NumberOfHeight;
@@ -39,7 +39,7 @@ void ASO_Building_Manager::Auth_SpawnBuilding()
 	TSubclassOf<ASO_Building_Base> StartedRoom = FindRow->StartedRooms[FMath::RandRange(0, FindRow->StartedRooms.Num()-1)];
 	
 	if (!IsValid(StartedRoom)) return;
-	SpawnRooms.Add(StartedRoom);
+	SpawnRooms.Add(GetWorld()->SpawnActor<ASO_Building_Base>(StartedRoom, GetActorTransform()));
 
 	auto FindNewChamber = [](const TArray<FDirectionWithKey>& DirectionWithKey, const TArray<TSubclassOf<ASO_Building_Base>>& Rooms) -> TSubclassOf<ASO_Building_Base>
 		{
@@ -108,6 +108,7 @@ void ASO_Building_Manager::Auth_SpawnBuilding()
 			return FoundLevel.Num() > 0 ? FoundLevel[FMath::RandRange(0, FoundLevel.Num() - 1)] : nullptr;
 		};
 
+	//Handle Spawn Logic
 	for (int32 i = 0; i < TotalRooms - 1; i++)
 	{
 		if (!SpawnRooms.IsValidIndex(i) || !IsValid(SpawnRooms[i])) continue;
@@ -121,7 +122,7 @@ void ASO_Building_Manager::Auth_SpawnBuilding()
 		//First Row
 		if (WidthIndex < LengthAndWidth.X && !UpperLevel)
 		{
-			const ASO_Building_Base* FrontRoom = SpawnRooms[i]->GetDefaultObject<ASO_Building_Base>();
+			const ASO_Building_Base* FrontRoom = SpawnRooms[i];
 
 			DirectionWithKey.Add(FDirectionWithKey(EDirection::Front, FrontRoom->BuildingKey.BackID));
 		}
@@ -130,15 +131,15 @@ void ASO_Building_Manager::Auth_SpawnBuilding()
 		{
 			if (StartAtFirst)
 			{
-				const ASO_Building_Base* LeftRoom = SpawnRooms[i - (LengthAndWidth.X - 1)]->GetDefaultObject<ASO_Building_Base>();
+				const ASO_Building_Base* LeftRoom = SpawnRooms[i - (LengthAndWidth.X - 1)];
 
 				DirectionWithKey.Add(FDirectionWithKey(EDirection::Left, LeftRoom->BuildingKey.RightID));
 				
 			}
 			else
 			{
-				const ASO_Building_Base* LeftRoom = SpawnRooms[i - (LengthAndWidth.X - 1)]->GetDefaultObject<ASO_Building_Base>();
-				const ASO_Building_Base* FrontRoom = SpawnRooms[i]->GetDefaultObject<ASO_Building_Base>();
+				const ASO_Building_Base* LeftRoom = SpawnRooms[i - (LengthAndWidth.X - 1)];
+				const ASO_Building_Base* FrontRoom = SpawnRooms[i];
 
 				DirectionWithKey.Add(FDirectionWithKey(EDirection::Left, LeftRoom->BuildingKey.RightID));
 				DirectionWithKey.Add(FDirectionWithKey(EDirection::Front, FrontRoom->BuildingKey.BackID));
@@ -150,7 +151,7 @@ void ASO_Building_Manager::Auth_SpawnBuilding()
 		{
 			if (WidthIndex != 0 && WidthIndex < LengthAndWidth.X) //First Row
 			{
-				const ASO_Building_Base* FrontRoom = SpawnRooms[i]->GetDefaultObject<ASO_Building_Base>();
+				const ASO_Building_Base* FrontRoom = SpawnRooms[i];
 
 				DirectionWithKey.Add(FDirectionWithKey(EDirection::Front, FrontRoom->BuildingKey.BackID));
 			}
@@ -158,14 +159,14 @@ void ASO_Building_Manager::Auth_SpawnBuilding()
 			{
 				if (StartAtFirst)
 				{
-					const ASO_Building_Base* LeftRoom = SpawnRooms[i - (LengthAndWidth.X - 1)]->GetDefaultObject<ASO_Building_Base>();
+					const ASO_Building_Base* LeftRoom = SpawnRooms[i - (LengthAndWidth.X - 1)];
 
 					DirectionWithKey.Add(FDirectionWithKey(EDirection::Left, LeftRoom->BuildingKey.RightID));
 				}
 				else
 				{
-					const ASO_Building_Base* LeftRoom = SpawnRooms[i - (LengthAndWidth.X - 1)]->GetDefaultObject<ASO_Building_Base>();
-					const ASO_Building_Base* FrontRoom = SpawnRooms[i]->GetDefaultObject<ASO_Building_Base>();
+					const ASO_Building_Base* LeftRoom = SpawnRooms[i - (LengthAndWidth.X - 1)];
+					const ASO_Building_Base* FrontRoom = SpawnRooms[i];
 
 					DirectionWithKey.Add(FDirectionWithKey(EDirection::Left, LeftRoom->BuildingKey.RightID));
 					DirectionWithKey.Add(FDirectionWithKey(EDirection::Front, FrontRoom->BuildingKey.BackID));
@@ -173,17 +174,21 @@ void ASO_Building_Manager::Auth_SpawnBuilding()
 			}
 
 			// Compulsory to obtain the bottom ID for all upper-level chambers
-			const ASO_Building_Base* BottomRoom = SpawnRooms[ (i + 1) - TotalWidth]->GetDefaultObject<ASO_Building_Base>();
+			const ASO_Building_Base* BottomRoom = SpawnRooms[ (i + 1) - TotalWidth];
 			DirectionWithKey.Add(FDirectionWithKey(EDirection::Bottom, BottomRoom->BuildingKey.TopID));
 		}
 
 		if (TSubclassOf<ASO_Building_Base> NewChamber = FindNewChamber(DirectionWithKey, FindRow->Rooms); IsValid(NewChamber))
 		{
-			SpawnRooms.Add(NewChamber);
+			float Xaxis = GetActorLocation().X + (ChamberSize.X * int32(WidthIndex / LengthAndWidth.X));
+			float Yaxis = GetActorLocation().Y + (ChamberSize.Y * int32(WidthIndex % LengthAndWidth.Y));
+			float Zaxis = GetActorLocation().Z + (ChamberSize.Z * int32((i + 1) / TotalWidth));
+
+			SpawnRooms.Add(GetWorld()->SpawnActor<ASO_Building_Base>(NewChamber,FTransform(FVector(Xaxis,Yaxis,Zaxis))));
 		}
 	}
 
-	for (TSubclassOf<ASO_Building_Base> s : SpawnRooms)
+	for (const ASO_Building_Base* s : SpawnRooms)
 	{
 		GEngine->AddOnScreenDebugMessage(-1, 500.f, FColor::Red, s->GetName());
 	}

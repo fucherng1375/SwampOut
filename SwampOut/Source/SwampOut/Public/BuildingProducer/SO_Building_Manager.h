@@ -81,6 +81,9 @@ public:
 	FIntPoint LengthAndWidth = FIntPoint(1, 1);
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	FVector ChamberSize = FVector(500.0f , 500.0f, 500.0f);
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	FIntPoint RandomNumberOfHeight = FIntPoint(1, 3);
 
 #pragma endregion
