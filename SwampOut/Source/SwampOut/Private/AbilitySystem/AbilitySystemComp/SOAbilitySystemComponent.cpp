@@ -105,7 +105,6 @@ void USOAbilitySystemComponent::BindAbilitiesToInput(UInputComponent* PlayerInpu
 				[&, index = InputID.Value](const FInputActionValue& InputActionValue)
 				{
 					AbilityLocalInputPressed(index);
-					//GEngine->AddOnScreenDebugMessage(-1, 5.f, GetOwner()->HasAuthority() ? FColor::Red : FColor::Green, TEXT("o0o"));
 				});
 		}
 	}

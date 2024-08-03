@@ -13,7 +13,6 @@ void ASO_Building_Manager::BeginPlay()
 {
 	Super::BeginPlay();
 	Auth_SpawnBuilding();
-	//Auth_SpawnBuildingOld();
 }
 
 // Called every frame
@@ -23,152 +22,169 @@ void ASO_Building_Manager::Tick(float DeltaTime)
 
 }
 
-void ASO_Building_Manager::ClassifyBuildingData()
-{
-	FBuildingProceduralGenerateData* FindRow = DataTable->FindRow<FBuildingProceduralGenerateData>(FName(FString::FromInt(ID)), FString());
-	if (!FindRow || FindRow->PossibleLevel.Num() <= 0) return;
-
-	SeparateVariant.Empty();
-
-	for (const auto& data : FindRow->PossibleLevel)
-	{
-		EVariant KeyAccess = data.Level->GetDefaultObject<ASO_Building_Base>()->EntryID;
-		if (SeparateVariant.Contains(KeyAccess))
-		{
-			SeparateVariant.Find(KeyAccess)->PossibleLevel.Add(data);
-		}
-		else
-		{
-			SeparateVariant.Add(data.Level->GetDefaultObject<ASO_Building_Base>()->EntryID, FBuildingMultipleLevelData(data));
-		}
-	}
-
-	for (auto& A : SeparateVariant)
-	{
-		A.Value.PossibleLevel.Sort([&](const FBuildingSingleLevelData& A, const FBuildingSingleLevelData& B) { return A.SpawnWeight < B.SpawnWeight; });
-	}
-}
-
 void ASO_Building_Manager::Auth_SpawnBuilding()
 {
 	if (!HasAuthority() || !IsValid(DataTable)) return;
-	FBuildingProceduralGenerateData* FindRow = DataTable->FindRow<FBuildingProceduralGenerateData>(FName(FString::FromInt(ID)), FString());
-	if (!FindRow || FindRow->PossibleLevel.Num() <= 0) return;
+	FBuildingVariantData* FindRow = DataTable->FindRow<FBuildingVariantData>(FName(FString::FromInt(DataTableID)), FString());
+	if (!FindRow || FindRow->StartedRooms.Num() == 0) return; 
 
-	int32 NumberOfLevel = FMath::RandRange(RandomNumberOfLevelInRange.Min, RandomNumberOfLevelInRange.Max);
+	int32 NumberOfHeight = FMath::RandRange(RandomNumberOfHeight.X, RandomNumberOfHeight.Y);
 
-	TArray<FBuildingSingleLevelData> ReadyToSpawns = TArray<FBuildingSingleLevelData>();
-	ReadyToSpawns.Reserve(NumberOfLevel);
+	TArray<TSubclassOf<ASO_Building_Base>> SpawnRooms = TArray<TSubclassOf<ASO_Building_Base>>();
 
-	TArray<TSubclassOf<ASO_Building_Base>> CurrentLevels = TArray<TSubclassOf<ASO_Building_Base>>();
-	CurrentLevels.Reserve(NumberOfLevel);
+	int32 TotalWidth = LengthAndWidth.X * LengthAndWidth.Y;
+	int32 TotalRooms = TotalWidth * NumberOfHeight;
+	SpawnRooms.Reserve(TotalRooms);
 
-	TArray<EVariant> CurrentExitID = TArray<EVariant>();
-	CurrentExitID.Reserve(NumberOfLevel + 1);
+	TSubclassOf<ASO_Building_Base> StartedRoom = FindRow->StartedRooms[FMath::RandRange(0, FindRow->StartedRooms.Num()-1)];
 	
-	//InitializeGroundFloor
-	TSubclassOf<ASO_Building_Base> GroundFloor = FindRow->RandomGroundFloor[FMath::RandRange(0 , (FindRow->RandomGroundFloor.Num() - 1))];
-	if (!IsValid(GroundFloor)) return;
-	CurrentExitID.Add(GroundFloor->GetDefaultObject<ASO_Building_Base>()->ExitID);
-	ReadyToSpawns.Add(FBuildingSingleLevelData(GroundFloor));
+	if (!IsValid(StartedRoom)) return;
+	SpawnRooms.Add(StartedRoom);
 
-	const auto GetRandomLevel = [&](const TArray<FBuildingSingleLevelData>& PossibleLevel, TArray<TSubclassOf<ASO_Building_Base>>& CurrentLevels)
+	auto FindNewChamber = [](const TArray<FDirectionWithKey>& DirectionWithKey, const TArray<TSubclassOf<ASO_Building_Base>>& Rooms) -> TSubclassOf<ASO_Building_Base>
 		{
-			int32 TotalLength = PossibleLevel.Num();
-			float Random = FMath::RandRange(0.0f,1.5f);
-			for (const auto& Data : PossibleLevel)
+			TArray<TSubclassOf<ASO_Building_Base>> FoundLevel;
+
+			for (const auto& NewLevel : Rooms)
 			{
-				int32 FindIndex = CurrentLevels.FindLast(Data.Level);
-				bool CheckSame = FindIndex != -1 ? ((CurrentLevels.Num() - 1) - FindIndex) > FMath::RandRange(Data.RandomRepeatAfterCertainLevel.Min, Data.RandomRepeatAfterCertainLevel.Max) : true;
-				if (Random <= Data.SpawnWeight && CheckSame) return Data;
+				if (!IsValid(NewLevel)) continue;
+
+				uint8 MatchedKey = 0;
+				uint8 TotalMatched = DirectionWithKey.Num();
+
+				ASO_Building_Base* NewLevelPtr = NewLevel->GetDefaultObject<ASO_Building_Base>();
+
+				for (const FDirectionWithKey& DK : DirectionWithKey)
+				{
+					//UE_LOG(LogTemp, Display, TEXT("SpawnRooms length %s"),);
+					switch (DK.Direction)
+					{
+						case EDirection::Front:
+							if (NewLevelPtr->BuildingKey.FrontID != 0 && NewLevelPtr->BuildingKey.FrontID == DK.Key)
+							{
+								MatchedKey++;
+							}
+							break;
+						case EDirection::Back:
+							if (NewLevelPtr->BuildingKey.BackID != 0 && NewLevelPtr->BuildingKey.BackID == DK.Key)
+							{
+								MatchedKey++;
+							}
+							break;
+						case EDirection::Left:
+							if (NewLevelPtr->BuildingKey.LeftID != 0 && NewLevelPtr->BuildingKey.LeftID == DK.Key)
+							{
+								MatchedKey++;
+							}
+							break;
+						case EDirection::Right:
+							if (NewLevelPtr->BuildingKey.RightID != 0 && NewLevelPtr->BuildingKey.RightID == DK.Key)
+							{
+								MatchedKey++;
+							}
+							break;
+						case EDirection::Top:
+							if (NewLevelPtr->BuildingKey.TopID != 0 && NewLevelPtr->BuildingKey.TopID == DK.Key)
+							{
+								MatchedKey++;
+							}
+							break;
+						case EDirection::Bottom:
+							if (NewLevelPtr->BuildingKey.BottomID != 0 && NewLevelPtr->BuildingKey.BottomID == DK.Key)
+							{
+								MatchedKey++;
+							}
+							break;
+						default:
+							break;
+					}
+
+					if (MatchedKey == TotalMatched)
+					{
+						FoundLevel.Add(NewLevel);
+					}
+				}
 			}
-			return PossibleLevel[PossibleLevel.Num()-1];
+			return FoundLevel.Num() > 0 ? FoundLevel[FMath::RandRange(0, FoundLevel.Num() - 1)] : nullptr;
 		};
 
-	//InitializeUpperFloor
-	for (int32 i = 0; i < NumberOfLevel; i++)
+	for (int32 i = 0; i < TotalRooms - 1; i++)
 	{
-		int32 FindIndex = CurrentExitID.Num() - 1;
-		if (!SeparateVariant.Contains(CurrentExitID[FindIndex])) continue;
-		
-		const TArray<FBuildingSingleLevelData>& LevelData = SeparateVariant.Find(CurrentExitID[FindIndex])->PossibleLevel;
+		if (!SpawnRooms.IsValidIndex(i) || !IsValid(SpawnRooms[i])) continue;
 
-		const FBuildingSingleLevelData& SpawnLevel = GetRandomLevel(LevelData, CurrentLevels);
-		if (!IsValid(SpawnLevel.Level)) continue;
+		int32 WidthIndex =  (i + 1) % TotalWidth;
+		bool StartAtFirst = (WidthIndex % LengthAndWidth.X) == 0;
+		bool UpperLevel = ( (i + 1) / TotalWidth) >= 1;
 
-		//UE_LOG(LogTemp, Warning, TEXT("Level-> %s"), *SpawnLevel.Level->GetName());
+		TArray<FDirectionWithKey> DirectionWithKey;
 
-		CurrentExitID.Add(SpawnLevel.Level->GetDefaultObject<ASO_Building_Base>()->ExitID);
-		CurrentLevels.Add(SpawnLevel.Level);
-		ReadyToSpawns.Add(SpawnLevel);
-	}
-
-	//Spawn
-	for (auto& Data : ReadyToSpawns)
-	{
-		FTransform SpawnTransform;
-		CacheLevel.Add(GetWorld()->SpawnActor<ASO_Building_Base>(Data.Level, SpawnTransform));
-		OnSpawningLevel(CacheLevel[CacheLevel.Num() - 1]);
-	}
-}
-
-void ASO_Building_Manager::Auth_SpawnBuildingOld()
-{
-	/*
-	if (!HasAuthority() || !IsValid(DataTable)) return;
-
-	FBuildingProceduralGenerateData* FindRow = DataTable->FindRow<FBuildingProceduralGenerateData>(FName(FString::FromInt(ID)), FString());
-
-	if (!FindRow || FindRow->PossibleLevel.Num() <= 0) return;
-
-	TArray<FBuildingSingleLevelData> SortedArray = FindRow->PossibleLevel;
-	Algo::Sort(SortedArray, [](const FBuildingSingleLevelData& A, const FBuildingSingleLevelData& B)
+		//First Row
+		if (WidthIndex < LengthAndWidth.X && !UpperLevel)
 		{
-			return A.SpawnWeight > B.SpawnWeight;
-		});
+			const ASO_Building_Base* FrontRoom = SpawnRooms[i]->GetDefaultObject<ASO_Building_Base>();
 
-	TArray<TSubclassOf<ASO_Building_Base>> HasSpawned;
+			DirectionWithKey.Add(FDirectionWithKey(EDirection::Front, FrontRoom->BuildingKey.BackID));
+		}
 
-	int32 NumberOfLevel = FMath::RandRange(RandomNumberOfLevelInRange.X, RandomNumberOfLevelInRange.Y);
-	int32 InvalidLoopIndex = 0;
-	while (HasSpawned.Num() < NumberOfLevel && InvalidLoopIndex < NumberOfLevel)
-	{
-		for (FBuildingSingleLevelData& SA : SortedArray)
+		if (WidthIndex >= LengthAndWidth.X && !UpperLevel)
 		{
-			//RandomAfterCertainLevel
-			int32 FindLastIndex = HasSpawned.FindLast(SA.Level);
-			int32 Distance = (HasSpawned.Num() - 1) - FindLastIndex;
-			int32 AfterCertainLevel = FMath::RandRange(int32(SA.RandomRepeatAfterCertainLevel.X), int32(SA.RandomRepeatAfterCertainLevel.Y));
-			bool RandomAfterCertainLevel = FindLastIndex != -1 && AfterCertainLevel < (NumberOfLevel - HasSpawned.Num()) ? Distance > AfterCertainLevel : true;
-			if (!RandomAfterCertainLevel) continue;
-
-			int32 VariantSpawnedCount = Algo::Count(HasSpawned, SA.Level);
-			float RandomValue = FMath::RandRange(0.0f, 1.5f);
-			
-			if (RandomValue <= SA.SpawnWeight && VariantSpawnedCount < SA.SpawnLimit)
+			if (StartAtFirst)
 			{
-				if (!IsValid(SA.Level)) 
-				{ 
-					InvalidLoopIndex++;
-					UE_LOG(LogTemp, Warning, TEXT("There is an invalid class in the DataTable %s"), *DataTable->GetName());
-					continue;
-				}
+				const ASO_Building_Base* LeftRoom = SpawnRooms[i - (LengthAndWidth.X - 1)]->GetDefaultObject<ASO_Building_Base>();
 
-				if (SA.Repeat ? true : !HasSpawned.Contains(SA.Level))
+				DirectionWithKey.Add(FDirectionWithKey(EDirection::Left, LeftRoom->BuildingKey.RightID));
+				
+			}
+			else
+			{
+				const ASO_Building_Base* LeftRoom = SpawnRooms[i - (LengthAndWidth.X - 1)]->GetDefaultObject<ASO_Building_Base>();
+				const ASO_Building_Base* FrontRoom = SpawnRooms[i]->GetDefaultObject<ASO_Building_Base>();
+
+				DirectionWithKey.Add(FDirectionWithKey(EDirection::Left, LeftRoom->BuildingKey.RightID));
+				DirectionWithKey.Add(FDirectionWithKey(EDirection::Front, FrontRoom->BuildingKey.BackID));
+			}
+		}
+
+		//Upper level
+		if (UpperLevel)
+		{
+			if (WidthIndex != 0 && WidthIndex < LengthAndWidth.X) //First Row
+			{
+				const ASO_Building_Base* FrontRoom = SpawnRooms[i]->GetDefaultObject<ASO_Building_Base>();
+
+				DirectionWithKey.Add(FDirectionWithKey(EDirection::Front, FrontRoom->BuildingKey.BackID));
+			}
+			else if (WidthIndex >= LengthAndWidth.X) //After First Row
+			{
+				if (StartAtFirst)
 				{
-					HasSpawned.Add(SA.Level);
-					
-					FTransform SpawnTransform;
-					CacheLevel.Add(GetWorld()->SpawnActor<ASO_Building_Base>(SA.Level, SpawnTransform));
-					OnSpawningLevel(CacheLevel[CacheLevel.Num()-1]);
-					break;
+					const ASO_Building_Base* LeftRoom = SpawnRooms[i - (LengthAndWidth.X - 1)]->GetDefaultObject<ASO_Building_Base>();
+
+					DirectionWithKey.Add(FDirectionWithKey(EDirection::Left, LeftRoom->BuildingKey.RightID));
 				}
 				else
 				{
-					//If there are no buildings that can be spawned from the table, stop the while loop
-					InvalidLoopIndex++;
+					const ASO_Building_Base* LeftRoom = SpawnRooms[i - (LengthAndWidth.X - 1)]->GetDefaultObject<ASO_Building_Base>();
+					const ASO_Building_Base* FrontRoom = SpawnRooms[i]->GetDefaultObject<ASO_Building_Base>();
+
+					DirectionWithKey.Add(FDirectionWithKey(EDirection::Left, LeftRoom->BuildingKey.RightID));
+					DirectionWithKey.Add(FDirectionWithKey(EDirection::Front, FrontRoom->BuildingKey.BackID));
 				}
 			}
+
+			// Compulsory to obtain the bottom ID for all upper-level chambers
+			const ASO_Building_Base* BottomRoom = SpawnRooms[ (i + 1) - TotalWidth]->GetDefaultObject<ASO_Building_Base>();
+			DirectionWithKey.Add(FDirectionWithKey(EDirection::Bottom, BottomRoom->BuildingKey.TopID));
 		}
-	}*/
+
+		if (TSubclassOf<ASO_Building_Base> NewChamber = FindNewChamber(DirectionWithKey, FindRow->Rooms); IsValid(NewChamber))
+		{
+			SpawnRooms.Add(NewChamber);
+		}
+	}
+
+	for (TSubclassOf<ASO_Building_Base> s : SpawnRooms)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 500.f, FColor::Red, s->GetName());
+	}
 }

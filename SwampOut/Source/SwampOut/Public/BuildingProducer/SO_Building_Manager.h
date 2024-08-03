@@ -6,11 +6,55 @@
 #include "BuildingProducer/SO_Building_Base.h"
 #include "SO_Building_Manager.generated.h"
 
+USTRUCT(BlueprintType)
+struct FBuildingVariantData : public FTableRowBase
+{
+	GENERATED_BODY()
+
+	FBuildingVariantData() {}
+	FBuildingVariantData(TSubclassOf<ASO_Building_Base> Room)
+	{
+		Rooms.Add(Room);
+	}
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	TArray<TSubclassOf<ASO_Building_Base>> StartedRooms = TArray<TSubclassOf<ASO_Building_Base>>();
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	TArray<TSubclassOf<ASO_Building_Base>> Rooms = TArray<TSubclassOf<ASO_Building_Base>>();
+
+	TSubclassOf<ASO_Building_Base> FindRoomWithKey(const FBuildingKey& key) const
+	{
+		for (TSubclassOf<ASO_Building_Base> Data : Rooms)
+		{
+			if (Data->GetDefaultObject<ASO_Building_Base>()->BuildingKey == key)
+			{
+				return Data;
+			}
+		}
+		return nullptr;
+	}
+
+	FBuildingKey* FindRoomKeyWithKey(const FBuildingKey& key) const
+	{
+		for (TSubclassOf<ASO_Building_Base> Data : Rooms)
+		{
+			FBuildingKey* BuildingKey = &Data->GetDefaultObject<ASO_Building_Base>()->BuildingKey;
+			if (BuildingKey == nullptr) { continue; }
+			if (*BuildingKey == key)
+			{
+				return BuildingKey;
+			}
+		}
+		return nullptr;
+	}
+};
 
 UCLASS()
 class SWAMPOUT_API ASO_Building_Manager : public AActor
 {
 	GENERATED_BODY()
+
 public:
 	ASO_Building_Manager();
 
@@ -27,37 +71,19 @@ public:
 #pragma region EditAnywhere Custom Setting - Variable
 
 public:
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	int32 ID;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	FIntMinMax RandomNumberOfLevelInRange = FIntMinMax(1, 3);
-
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	TObjectPtr<UDataTable> DataTable;
 
-#pragma endregion
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	int32 DataTableID;
 
-#pragma region Building runtime caching data  - Variable
-public:
-	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
-	TArray<TObjectPtr<ASO_Building_Base>> CacheLevel = TArray<TObjectPtr<ASO_Building_Base>>();
-#pragma endregion
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	FIntPoint LengthAndWidth = FIntPoint(1, 1);
 
-#pragma region Cache data after compile  - Variable
-private:
-	UPROPERTY(VisibleAnywhere)
-	TMap<EVariant, FBuildingMultipleLevelData> SeparateVariant = TMap<EVariant, FBuildingMultipleLevelData>();
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	FIntPoint RandomNumberOfHeight = FIntPoint(1, 3);
 
 #pragma endregion
-
-#pragma region Call in Editor - Function
-public:
-	UFUNCTION(CallInEditor)
-	void ClassifyBuildingData();
-#pragma endregion
-
 
 #pragma region BlueprintImplementableEvent - Function
 public:
@@ -66,9 +92,6 @@ public:
 
 #pragma endregion
 
-#pragma region C++ Private Native Function - Function
 private:
-	void Auth_SpawnBuildingOld();
 	void Auth_SpawnBuilding();
-#pragma endregion
 };

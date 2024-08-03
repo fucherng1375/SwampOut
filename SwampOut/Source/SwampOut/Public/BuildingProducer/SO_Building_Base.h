@@ -7,92 +7,84 @@
 #include "Math/UnrealMathUtility.h"
 #include "SO_Building_Base.generated.h"
 
-
-UENUM(BlueprintType)
-enum class EVariant : uint8
+UENUM()
+enum class EFindDirection : uint8
 {
-	Variant1,
-	Variant2,
-	Variant3,
-	Variant4,
-	Variant5,
-	Variant6
+	Front,
+	Left,
+	FrontAndLeft,
+	Bottom,
+	BottomAndFront,
+	BottomAndLeft,
+	BottomFrontLeft
 };
 
-USTRUCT(BlueprintType)
-struct FIntMinMax
+UENUM()
+enum class EDirection : uint8
 {
-	GENERATED_BODY()
-public:
-	FIntMinMax() {}
-	FIntMinMax(int32 Min, int32 Max) :Min(Min), Max(Max) {}
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	int Min = 1;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	int Max = 1;
+	Front,
+	Back,
+	Left,
+	Right,
+	Top,
+	Bottom
 };
 
-USTRUCT(BlueprintType)
-struct FBuildingSingleLevelData
+USTRUCT()
+struct FDirectionWithKey
 {
 	GENERATED_BODY()
 
-public:
-	FBuildingSingleLevelData() {}
-	FBuildingSingleLevelData(const TSubclassOf<ASO_Building_Base>& Level):Level(Level){}
+	FDirectionWithKey() {}
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	TSubclassOf<ASO_Building_Base> Level;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	bool Repeat = true;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	float SpawnWeight = 1.0f;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	FIntMinMax MinMaxSpawn = FIntMinMax(1, 1);
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	FIntMinMax RandomRepeatAfterCertainLevel = FIntMinMax(1,2);
-};
-
-USTRUCT(BlueprintType)
-struct FBuildingProceduralGenerateData : public FTableRowBase
-{
-	GENERATED_BODY()
-
-public:
-	FBuildingProceduralGenerateData() {}
-	FBuildingProceduralGenerateData(const FBuildingSingleLevelData& AddIntoPossibleLevel) 
+	FDirectionWithKey(const EDirection& Direction, const uint8& Key)
+		: Direction(Direction), Key(Key)
 	{
-		PossibleLevel.Add(AddIntoPossibleLevel);
 	}
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	TArray<TSubclassOf<ASO_Building_Base>> RandomGroundFloor = TArray<TSubclassOf<ASO_Building_Base>>();
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	TArray<FBuildingSingleLevelData> PossibleLevel = TArray<FBuildingSingleLevelData>();
+	EDirection Direction;
+	uint8 Key;
 };
 
 USTRUCT(BlueprintType)
-struct FBuildingMultipleLevelData
+struct FBuildingKey
 {
 	GENERATED_BODY()
 
 public:
-	FBuildingMultipleLevelData() {}
-	FBuildingMultipleLevelData(const FBuildingSingleLevelData& AddIntoPossibleLevel)
+	FBuildingKey() {}
+
+	FBuildingKey(const uint8& FrontID, const uint8& BackID, const uint8& LeftID, const uint8& RightID, const uint8& TopID, const uint8& BottomID)
+		: FrontID(FrontID), BackID(BackID), LeftID(LeftID), RightID(RightID), TopID(TopID), BottomID(BottomID)
 	{
-		PossibleLevel.Add(AddIntoPossibleLevel);
 	}
+	
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	TArray<FBuildingSingleLevelData> PossibleLevel = TArray<FBuildingSingleLevelData>();
+	uint8 FrontID = 0;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	uint8 BackID = 0;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	uint8 LeftID = 0;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	uint8 RightID = 0;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	uint8 TopID = 0;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	uint8 BottomID = 0;
+
+	bool operator==(const FBuildingKey& OtherKey) const
+	{
+		return true;
+	}
 };
+
+
 
 UCLASS()
 class SWAMPOUT_API ASO_Building_Base : public AActor
@@ -104,10 +96,7 @@ public:
 	ASO_Building_Base();
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	EVariant EntryID;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	EVariant ExitID;
+	FBuildingKey BuildingKey = FBuildingKey();
 
 protected:
 	// Called when the game starts or when spawned
