@@ -185,11 +185,7 @@ void ASO_Building_Manager::Auth_SpawnBuilding()
 			float Zaxis = GetActorLocation().Z + (ChamberSize.Z * int32((i + 1) / TotalWidth));
 
 			SpawnRooms.Add(GetWorld()->SpawnActor<ASO_Building_Base>(NewChamber,FTransform(FVector(Xaxis,Yaxis,Zaxis))));
+			OnSpawningLevel(SpawnRooms[SpawnRooms.Num()-1]);
 		}
-	}
-
-	for (const ASO_Building_Base* s : SpawnRooms)
-	{
-		GEngine->AddOnScreenDebugMessage(-1, 500.f, FColor::Red, s->GetName());
 	}
 }
