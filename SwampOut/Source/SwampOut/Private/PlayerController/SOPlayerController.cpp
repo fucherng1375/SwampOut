@@ -2,6 +2,16 @@
 
 
 #include "PlayerController/SOPlayerController.h"
+#include "PlayerState/SO_PlayerState.h"
+
+ASOPlayerController::ASOPlayerController()
+{
+}
+
+void ASOPlayerController::BeginPlay()
+{
+	Super::BeginPlay();
+}
 
 void ASOPlayerController::Tick(float DeltaSeconds)
 {

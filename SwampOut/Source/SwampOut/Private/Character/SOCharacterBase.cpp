@@ -12,21 +12,15 @@
 #include "EnhancedInputSubsystems.h"
 #include "InputActionValue.h"
 #include "Net/UnrealNetwork.h"
+#include "AbilitySystemInterface.h"
 #include "AbilitySystem/GASStructAndEnum/InputID.h"
+#include "AbilitySystem/AbilitySystemComp/SOAbilitySystemComponent.h"
+#include "GameFramework/PlayerState.h"
+
+DEFINE_LOG_CATEGORY(Character);
 
 ASOCharacterBase::ASOCharacterBase()
 {
-#pragma region Ability System Component
-	AbilitySystemComponent = CreateDefaultSubobject<USOAbilitySystemComponent>("AbilitySystemComp");
-	AbilitySystemComponent->SetIsReplicated(true);
-	AbilitySystemComponent->SetReplicationMode(EGameplayEffectReplicationMode::Mixed);
-
-	AbilitySystemComponent->OnActiveGameplayEffectAddedDelegateToSelf.AddUObject(this, &ASOCharacterBase::OnActiveGameplayEffectApplied);
-	AbilitySystemComponent->OnAnyGameplayEffectRemovedDelegate().AddUObject(this, &ASOCharacterBase::OnActiveGameplayEffectRemoved);
-	AbilitySystemComponent->AbilityFailedCallbacks.AddUObject(this, &ASOCharacterBase::OnActiveGameplayAbilityFailed);
-#pragma endregion
-
-
 	// Set size for collision capsule
 	GetCapsuleComponent()->InitCapsuleSize(42.f, 96.0f);
 
@@ -75,29 +69,29 @@ void ASOCharacterBase::BeginPlay()
 	Super::BeginPlay();
 }
 
-void ASOCharacterBase::PossessedBy(AController* NewController)
+void ASOCharacterBase::OnPlayerStateChanged(APlayerState* NewPlayerState, APlayerState* OldPlayerState)
 {
-	Super::PossessedBy(NewController);
+	if (IAbilitySystemInterface* Interface = Cast<IAbilitySystemInterface>(NewPlayerState); Interface != nullptr)
+	{
+		UAbilitySystemComponent* Abs = Interface->GetAbilitySystemComponent();
+		
+		if (IsValid(Abs) == false)
+		{
+			UE_LOG(Character, Error, TEXT("%s : Failed to InitAbilityActorInfo because the AbilitySystemComponent is invalid."), *FString(__FUNCTION__));
+			return;
+		}
 
-	AbilitySystemComponent->InitAbilityActorInfo(this, this);
-}
-
-void ASOCharacterBase::OnRep_Controller()
-{
-	Super::OnRep_Controller();
-
-	AbilitySystemComponent->InitAbilityActorInfo(this, this);
-}
-
-void ASOCharacterBase::OnRep_PlayerState()
-{
-	Super::OnRep_PlayerState();
+		Abs->InitAbilityActorInfo(NewPlayerState,this);
+	}
+	else
+	{
+		UE_LOG(Character, Error, TEXT("%s : Failed to InitAbilityActorInfo because the AbilitySystemComponent couldn't be found in the Player State."), *FString(__FUNCTION__));
+	}
 }
 
 void ASOCharacterBase::PreInitializeComponents()
 {
 	Super::PreInitializeComponents();
-
 }
 
 void ASOCharacterBase::PostInitializeComponents()
@@ -108,8 +102,38 @@ void ASOCharacterBase::PostInitializeComponents()
 void ASOCharacterBase::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
-	
-	AbilitySystemComponent->BindAbilitiesToInput(PlayerInputComponent);
+
+#pragma region Bind Abilities To Input
+
+	if (IAbilitySystemInterface* Interface = Cast<IAbilitySystemInterface>(GetPlayerState()); Interface != nullptr)
+	{
+		if (IsValid(Interface->GetAbilitySystemComponent()))
+		{
+			USOAbilitySystemComponent* SOAbilitySystemComp = Cast<USOAbilitySystemComponent>(Interface->GetAbilitySystemComponent());
+
+			if (IsValid(SOAbilitySystemComp))
+			{
+				SOAbilitySystemComp->BindAbilitiesToInput(PlayerInputComponent);
+
+				UE_LOG(Character, Display, TEXT("%s : Successfully set up the input."), *FString(__FUNCTION__));
+			}
+			else
+			{
+				UE_LOG(Character, Error, TEXT("%s : Failed to set up the input because the AbilitySystemComponent isn't using USOAbilitySystemComponent."), *FString(__FUNCTION__));
+			}
+		}
+		else
+		{
+			UE_LOG(Character, Error, TEXT("%s : Failed to set up the input because the AbilitySystemComponent couldn't be found in the Player State."), *FString(__FUNCTION__));
+		}
+	}
+	else
+	{
+		UE_LOG(Character, Error, TEXT("%s : Failed to set up the input because the player state doesn't implement IAbilitySystemInterface."), *FString(__FUNCTION__));
+	}
+
+#pragma endregion
+
 
 	// Add Input Mapping Context
 	if (APlayerController* PlayerController = Cast<APlayerController>(GetController()))

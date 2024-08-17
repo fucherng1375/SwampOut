@@ -14,8 +14,14 @@ class SWAMPOUT_API ASOPlayerController : public APlayerController
 	GENERATED_BODY()
 
 public:
+
+	ASOPlayerController();
+
 	UPROPERTY(BlueprintAssignable)
 	FPlayerTick PlayerTickDelegate;
+
+protected:
+	virtual void BeginPlay() override;
 
 	virtual void Tick(float DeltaSeconds) override;
 };

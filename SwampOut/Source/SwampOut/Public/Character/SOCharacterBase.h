@@ -3,7 +3,6 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "AbilitySystem/AbilitySystemComp/SOAbilitySystemComponent.h"
 #include "GameplayTagContainer.h"
 #include "GameFramework/Character.h"
 #include "SOCharacterBase.generated.h"
@@ -12,8 +11,10 @@ class USpringArmComponent;
 class UCameraComponent;
 class UInputMappingContext;
 class UInputAction;
+class ASO_PlayerState;
 struct FInputActionValue;
 
+DECLARE_LOG_CATEGORY_EXTERN(Character, Log, All);
 
 UCLASS(Blueprintable)
 class ASOCharacterBase : public ACharacter
@@ -21,25 +22,6 @@ class ASOCharacterBase : public ACharacter
 	GENERATED_BODY()
 public:
 	ASOCharacterBase();
-
-#pragma region Ability System
-public:
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = ActorComponent)
-	TObjectPtr<USOAbilitySystemComponent> AbilitySystemComponent;
-
-protected:
-
-	UFUNCTION(BlueprintImplementableEvent)
-	void OnActiveGameplayEffectApplied(UAbilitySystemComponent* Target, const FGameplayEffectSpec& SpecApplied, FActiveGameplayEffectHandle ActiveHandle);
-
-	UFUNCTION(BlueprintImplementableEvent)
-	void OnActiveGameplayAbilityFailed(const UGameplayAbility* AbilityObject, const FGameplayTagContainer& FailedTags);
-
-	UFUNCTION(BlueprintImplementableEvent)
-	void OnActiveGameplayEffectRemoved(const FActiveGameplayEffect& EffectRemoved);
-
-#pragma endregion
 
 #pragma region Camera
 public:
@@ -82,12 +64,14 @@ protected:
 
 #pragma endregion
 
-#pragma region Native override
 protected:
 
-	virtual void PossessedBy(AController* NewController) override;
-	virtual void OnRep_Controller() override;
-	virtual void OnRep_PlayerState() override;
+	UPROPERTY()
+	TObjectPtr<ASO_PlayerState> PlayerStateBase;
+
+#pragma region Native override
+protected:
+	virtual void OnPlayerStateChanged(APlayerState* NewPlayerState, APlayerState* OldPlayerState) override;
 	virtual void PreInitializeComponents() override;
 	virtual void PostInitializeComponents() override;
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
